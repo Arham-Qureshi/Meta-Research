@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Meta Research - Discover Academic Papers{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero" id="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <span class="hero-line">Discover the</span>
+            <span class="hero-line hero-gradient">Research Universe</span>
+        </h1>
+        <p class="hero-subtitle">
+            Search millions of academic papers. Download PDFs instantly.<br>
+            Bookmark for later. All in one place.
+        </p>
+
+        <!-- Search Bar -->
+        <div class="search-container" id="searchContainer">
+            <div class="search-box">
+                <span class="search-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                </span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search papers, authors, topics..."
+                    autocomplete="off">
+                <button class="search-btn" id="searchBtn">
+                    <span class="search-btn-text">Search</span>
+                    <span class="search-btn-icon">→</span>
+                </button>
+            </div>
+            <!-- Source Filter -->
+            <div class="search-filters">
+                <button class="filter-chip active" data-source="all">All Sources</button>
+                <button class="filter-chip" data-source="arxiv">ArXiv</button>
+                <button class="filter-chip" data-source="semantic_scholar">Semantic Scholar</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="hero-stats">
+            <div class="stat-item">
+                <span class="stat-number" data-count="2000000">2M+</span>
+                <span class="stat-label">Papers indexed</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">Free</span>
+                <span class="stat-label">PDF Downloads</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">2</span>
+                <span class="stat-label">Sources</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Results Section -->
+<section class="results-section" id="resultsSection" style="display:none;">
+    <div class="results-header">
+        <h2 class="results-title">
+            <span class="results-icon">📄</span>
+            Results for "<span id="resultsQuery"></span>"
+        </h2>
+        <span class="results-count" id="resultsCount"></span>
+    </div>
+
+    <!-- Loading Skeleton -->
+    <div class="loading-container" id="loadingContainer" style="display:none;">
+        <div class="loader-spinner"></div>
+        <p class="loader-text">Searching research databases...</p>
+    </div>
+
+    <!-- Paper Cards Grid -->
+    <div class="papers-grid" id="papersGrid"></div>
+
+    <!-- No Results -->
+    <div class="no-results" id="noResults" style="display:none;">
+        <span class="no-results-icon">🔭</span>
+        <h3>No papers found</h3>
+        <p>Try different keywords or broaden your search.</p>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" id="featuresSection">
+    <h2 class="section-title">Why Meta<span class="logo-accent">Research</span>?</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <span class="feature-icon">⚡</span>
+            <h3>Instant Search</h3>
+            <p>Search across ArXiv and Semantic Scholar simultaneously. Get results in seconds.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">📥</span>
+            <h3>Free PDF Downloads</h3>
+            <p>Direct download links to open-access PDFs. No paywalls, no subscriptions.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🔖</span>
+            <h3>Smart Bookmarks</h3>
+            <p>Save papers to your library. Pick up where you left off anytime.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🌐</span>
+            <h3>Multi-Source</h3>
+            <p>Aggregates from multiple databases for comprehensive coverage.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

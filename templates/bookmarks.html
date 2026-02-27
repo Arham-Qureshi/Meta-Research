@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}My Bookmarks - Meta Research{% endblock %}
+
+{% block content %}
+<section class="bookmarks-section">
+    <div class="bookmarks-header">
+        <h1 class="bookmarks-title">
+            <span class="bookmarks-icon">📑</span>
+            Your Research Library
+        </h1>
+        <p class="bookmarks-subtitle">Papers you've saved for later reading</p>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-container" id="loadingContainer">
+        <div class="loader-spinner"></div>
+        <p class="loader-text">Loading your bookmarks...</p>
+    </div>
+
+    <!-- Bookmarks Grid -->
+    <div class="papers-grid" id="bookmarksGrid" style="display:none;"></div>
+
+    <!-- Empty State -->
+    <div class="no-results" id="emptyState" style="display:none;">
+        <span class="no-results-icon">📚</span>
+        <h3>No bookmarks yet</h3>
+        <p>Search for papers and bookmark them to build your library.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top:1rem;">Start Searching</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', loadBookmarks);
+
+    async function loadBookmarks() {
+        const grid = document.getElementById('bookmarksGrid');
+        const loading = document.getElementById('loadingContainer');
+        const empty = document.getElementById('emptyState');
+
+        try {
+            const res = await fetch('/api/bookmarks');
+            const data = await res.json();
+            loading.style.display = 'none';
+
+            if (!data.bookmarks || data.bookmarks.length === 0) {
+                empty.style.display = 'flex';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            grid.innerHTML = data.bookmarks.map(b => createBookmarkCard(b)).join('');
+        } catch (err) {
+            loading.innerHTML = '<p class="error-text">Failed to load bookmarks.</p>';
+        }
+    }
+
+    function createBookmarkCard(b) {
+        const savedDate = new Date(b.saved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        return `
+    <article class="paper-card bookmarked" data-bookmark-id="${b.id}">
+        <div class="paper-source">
+            <span class="source-badge">${b.source === 'arxiv' ? 'ArXiv' : 'Semantic Scholar'}</span>
+            <span class="paper-date">Saved ${savedDate}</span>
+        </div>
+        <h3 class="paper-title">${escapeHtml(b.title)}</h3>
+        <p class="paper-authors">${escapeHtml(b.authors || 'Unknown authors')}</p>
+        <p class="paper-summary">${escapeHtml(b.summary || 'No abstract available.')}</p>
+        <div class="paper-actions">
+            ${b.pdf_url ? `<a href="${b.pdf_url}" target="_blank" rel="noopener" class="btn btn-download"><span>📥</span> Download PDF</a>` : '<span class="no-pdf">No PDF available</span>'}
+            <button class="btn btn-bookmark active" onclick="removeBookmark(${b.id}, this)" title="Remove bookmark">
+                <span>🔖</span> Saved
+            </button>
+        </div>
+    </article>`;
+    }
+
+    async function removeBookmark(id, btn) {
+        try {
+            const res = await fetch('/api/bookmarks/' + id, { method: 'DELETE' });
+            if (res.ok) {
+                const card = btn.closest('.paper-card');
+                card.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => {
+                    card.remove();
+                    if (document.querySelectorAll('.paper-card').length === 0) {
+                        document.getElementById('emptyState').style.display = 'flex';
+                        document.getElementById('bookmarksGrid').style.display = 'none';
+                    }
+                }, 300);
+            }
+        } catch (err) {
+            console.error('Failed to remove bookmark', err);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}
