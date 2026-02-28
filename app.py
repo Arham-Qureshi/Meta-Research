@@ -2,7 +2,14 @@
 Meta Research - Research Paper Discovery Service
 Main Flask Application
 """
+# ---------------------------------------------------------------------------
+# NOTE: Chat with Paper requires a free Gemini API key.
+#       Set env var GEMINI_API_KEY before running.
+#       Get one at: https://aistudio.google.com/app/apikey
+# ---------------------------------------------------------------------------
 import os
+from dotenv import load_dotenv
+load_dotenv()  # Reads .env file 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -134,6 +141,12 @@ def index():
 def bookmarks_page():
     return render_template('bookmarks.html')
 
+
+@app.route('/paper/<path:paper_id>')
+def paper_chat(paper_id):
+    """Paper detail + chat page."""
+    return render_template('paper_chat.html', paper_id=paper_id)
+
 # ---------------------------------------------------------------------------
 # API Routes
 # ---------------------------------------------------------------------------
@@ -224,6 +237,34 @@ def api_me():
     if current_user.is_authenticated:
         return jsonify({'authenticated': True, 'username': current_user.username, 'email': current_user.email})
     return jsonify({'authenticated': False})
+
+
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    """Chat with a paper using AI."""
+    from chat_service import chat_with_paper
+    data = request.get_json()
+    if not data or not data.get('paper') or not data.get('message'):
+        return jsonify({'error': 'paper and message are required.'}), 400
+
+    result = chat_with_paper(data['paper'], data['message'])
+    if result.get('error'):
+        return jsonify({'error': result['error']}), 500
+    return jsonify({'reply': result['reply']})
+
+
+@app.route('/api/chat/summarize', methods=['POST'])
+def api_summarize():
+    """Generate a comprehensive summary of a paper."""
+    from chat_service import summarize_paper
+    data = request.get_json()
+    if not data or not data.get('paper'):
+        return jsonify({'error': 'paper data is required.'}), 400
+
+    result = summarize_paper(data['paper'])
+    if result.get('error'):
+        return jsonify({'error': result['error']}), 500
+    return jsonify({'summary': result['summary']})
 
 
 # ---------------------------------------------------------------------------

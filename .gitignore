@@ -1,3 +1,4 @@
 .agents/
 __pycache__/
 meta_research.db
+.env

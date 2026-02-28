@@ -154,6 +154,7 @@ function createPaperCard(paper, isBookmarked) {
             ${paper.abstract_url
             ? `<a href="${paper.abstract_url}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.8rem;"><span>🔗</span> View Page</a>`
             : ''}
+            <a href="/paper/${encodeURIComponent(paper.id)}" class="btn btn-chat-paper" style="font-size:0.8rem;"><span>💬</span> Chat</a>
             <button class="btn btn-bookmark ${isBookmarked ? 'active' : ''}" onclick="toggleBookmark(this, ${JSON.stringify(paper).replace(/"/g, '&quot;')})" title="${isBookmarked ? 'Remove bookmark' : 'Bookmark this paper'}">
                 <span>${isBookmarked ? '🔖' : '🔖'}</span> ${isBookmarked ? 'Saved' : 'Bookmark'}
             </button>
