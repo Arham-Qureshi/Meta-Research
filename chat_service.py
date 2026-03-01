@@ -2,12 +2,13 @@
 chat_service.py – AI Chat Service for Meta Research
 ====================================================
 
-Uses Google Gemini (gemini-2.0-flash) to power the "Chat with Paper" feature.
-The gemini-2.0-flash model is 100% FREE to use – no billing required.
+Uses two AI backends:
+  - Google Gemini (gemini-2.0-flash) for paper SUMMARIZATION.
+  - Groq (llama-3.3-70b-versatile) for the "Chat with Paper" Q&A feature.
 
 Setup:
-    Set the environment variable GEMINI_API_KEY with your free API key from
-    https://aistudio.google.com/app/apikey
+    GEMINI_API_KEY – free key from https://aistudio.google.com/app/apikey
+    GROQ_API_KEY   – free key from https://console.groq.com
 """
 
 import os
@@ -18,15 +19,27 @@ try:
 except ImportError:
     GENAI_AVAILABLE = False
 
+try:
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
+# Gemini (for summarization)
 API_KEY = os.environ.get('GEMINI_API_KEY', '')
 MODEL_NAME = 'gemini-2.0-flash'
 
 if GENAI_AVAILABLE and API_KEY:
     genai.configure(api_key=API_KEY)
+
+# Groq (for chat with paper)
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+GROQ_MODEL = 'llama-3.3-70b-versatile'
+groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_AVAILABLE and GROQ_API_KEY else None
 
 
 def _get_model():
@@ -69,7 +82,7 @@ def _build_paper_context(paper: dict) -> str:
 
 def chat_with_paper(paper: dict, user_message: str) -> dict:
     """
-    Send a user question about a paper to Gemini and return the AI response.
+    Send a user question about a paper to Groq and return the AI response.
 
     Args:
         paper: Dict with paper metadata (title, authors, summary, etc.)
@@ -78,35 +91,41 @@ def chat_with_paper(paper: dict, user_message: str) -> dict:
     Returns:
         {'reply': str, 'error': str|None}
     """
-    model = _get_model()
-    if model is None:
-        if not GENAI_AVAILABLE:
-            return {
-                'reply': '',
-                'error': 'The google-generativeai package is not installed. '
-                         'Run: pip install google-generativeai'
-            }
+    if not GROQ_AVAILABLE:
         return {
             'reply': '',
-            'error': 'GEMINI_API_KEY environment variable is not set. '
-                     'Get a free key at https://aistudio.google.com/app/apikey'
+            'error': 'The groq package is not installed. '
+                     'Run: pip install groq'
+        }
+    if groq_client is None:
+        return {
+            'reply': '',
+            'error': 'GROQ_API_KEY environment variable is not set. '
+                     'Get a free key at https://console.groq.com'
         }
 
     context = _build_paper_context(paper)
 
-    prompt = f"""You are a helpful research assistant. The user is reading an academic paper and has a question about it. Answer clearly and accurately based on the paper's information. If you cannot determine the answer from the provided abstract, say so honestly and offer your best insight.
+    system_prompt = """You are a helpful research assistant. The user is reading an academic paper and has a question about it. Answer clearly and accurately based on the paper's information. If you cannot determine the answer from the provided abstract, say so honestly and offer your best insight. Use bullet points or numbered lists where helpful. Keep the tone informative but accessible."""
 
---- PAPER ---
+    user_prompt = f"""--- PAPER ---
 {context}
 --- END PAPER ---
 
-User's question: {user_message}
-
-Provide a clear, well-structured answer. Use bullet points or numbered lists where helpful. Keep the tone informative but accessible."""
+User's question: {user_message}"""
 
     try:
-        response = model.generate_content(prompt)
-        return {'reply': response.text, 'error': None}
+        chat_completion = groq_client.chat.completions.create(
+            messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_prompt},
+            ],
+            model=GROQ_MODEL,
+            temperature=0.4,
+            max_tokens=1024,
+        )
+        reply = chat_completion.choices[0].message.content
+        return {'reply': reply, 'error': None}
     except Exception as e:
         return {'reply': '', 'error': f'AI request failed: {str(e)}'}
 
