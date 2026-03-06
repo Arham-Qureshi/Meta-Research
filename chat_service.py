@@ -13,6 +13,15 @@ Setup:
 
 import os
 
+# Local pre-summarization (token optimization)
+try:
+    from sumy.parsers.plaintext import PlaintextParser
+    from sumy.nlp.tokenizers import Tokenizer
+    from sumy.summarizers.lsa import LsaSummarizer
+    SUMY_AVAILABLE = True
+except ImportError:
+    SUMY_AVAILABLE = False
+
 try:
     import google.generativeai as genai
     GENAI_AVAILABLE = True
@@ -52,6 +61,40 @@ def _get_model():
 
 
 # ---------------------------------------------------------------------------
+# Local Pre-Summarization (Token Optimization)
+# ---------------------------------------------------------------------------
+
+def _local_presummarize(text: str, sentence_count: int = 6) -> str:
+    """
+    Use sumy's LSA algorithm to extract the most important sentences
+    from a long text. This runs 100% locally with zero API cost.
+
+    Args:
+        text: The original abstract/summary text.
+        sentence_count: Number of key sentences to extract (default: 6).
+
+    Returns:
+        A shortened version of the text (5-7 sentences), or the
+        original text if sumy is unavailable or the text is already short.
+    """
+    if not SUMY_AVAILABLE:
+        return text
+
+    # If the text is already short (fewer than 8 sentences), don't summarize
+    if text.count('.') <= sentence_count + 1:
+        return text
+
+    try:
+        parser = PlaintextParser.from_string(text, Tokenizer('english'))
+        summarizer = LsaSummarizer()
+        summary_sentences = summarizer(parser.document, sentence_count)
+        return ' '.join(str(s) for s in summary_sentences)
+    except Exception:
+        # If anything goes wrong, just return the original text
+        return text
+
+
+# ---------------------------------------------------------------------------
 # Build paper context string
 # ---------------------------------------------------------------------------
 
@@ -69,9 +112,10 @@ def _build_paper_context(paper: dict) -> str:
         if isinstance(cats, list):
             cats = ', '.join(cats)
         parts.append(f"Categories: {cats}")
-    # Use the full summary/abstract
+    # Pre-summarize the abstract locally before sending to AI
     abstract = paper.get('full_summary') or paper.get('summary') or ''
     if abstract:
+        abstract = _local_presummarize(abstract)
         parts.append(f"Abstract:\n{abstract}")
     return '\n'.join(parts)
 
@@ -145,23 +189,22 @@ def summarize_paper(paper: dict) -> dict:
     Returns:
         {'summary': str, 'error': str|None}
     """
-    model = _get_model()
-    if model is None:
-        if not GENAI_AVAILABLE:
-            return {
-                'summary': '',
-                'error': 'The google-generativeai package is not installed. '
-                         'Run: pip install google-generativeai'
-            }
+    if not GROQ_AVAILABLE:
         return {
             'summary': '',
-            'error': 'GEMINI_API_KEY environment variable is not set. '
-                     'Get a free key at https://aistudio.google.com/app/apikey'
+            'error': 'The groq package is not installed. '
+                     'Run: pip install groq'
+        }
+    if groq_client is None:
+        return {
+            'summary': '',
+            'error': 'GROQ_API_KEY environment variable is not set. '
+                     'Get a free key at https://console.groq.com'
         }
 
     context = _build_paper_context(paper)
 
-    prompt = f"""You are an expert research analyst. Given the following academic paper, provide a comprehensive and insightful summary. Structure your response as follows:
+    system_prompt = """You are an expert research analyst. Given an academic paper, provide a comprehensive and insightful summary. Structure your response as follows:
 
 ## Overview
 A clear, accessible explanation of what this paper is about (2-3 sentences).
@@ -181,14 +224,24 @@ Real-world applications and scenarios where this research could be applied. Who 
 ## Limitations
 Any noted limitations or areas for future work.
 
---- PAPER ---
-{context}
---- END PAPER ---
-
 Provide a thorough, well-organized summary. Use markdown formatting. Be informative but keep it accessible to someone who hasn't read the full paper."""
 
+    user_prompt = f"""--- PAPER ---
+{context}
+--- END PAPER ---"""
+
     try:
-        response = model.generate_content(prompt)
-        return {'summary': response.text, 'error': None}
+        chat_completion = groq_client.chat.completions.create(
+            messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_prompt},
+            ],
+            model=GROQ_MODEL,
+            temperature=0.5,
+            max_tokens=2048,
+        )
+        reply = chat_completion.choices[0].message.content
+        return {'summary': reply, 'error': None}
     except Exception as e:
         return {'summary': '', 'error': f'AI request failed: {str(e)}'}
+
