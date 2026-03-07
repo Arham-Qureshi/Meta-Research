@@ -6,45 +6,49 @@
 <section class="hero" id="hero">
     <div class="hero-glow"></div>
     <div class="hero-content">
+        <div class="hero-badge">NEXT GENERATION INTELLIGENCE</div>
         <h1 class="hero-title">
-            <span class="hero-line">Discover the</span>
-            <span class="hero-line hero-gradient">Research Universe</span>
+            <span class="hero-line">Search the sum of</span>
+            <span class="hero-line hero-gradient">human knowledge.</span>
         </h1>
         <p class="hero-subtitle">
-            Search millions of academic papers. Download PDFs instantly.<br>
-            Bookmark for later. All in one place.
+            An AI-native research engine built for the next decade of scientific discovery.
         </p>
 
         <!-- Search Bar -->
         <div class="search-container" id="searchContainer">
-            <div class="search-box">
+            <div class="search-box" id="searchBox">
                 <span class="search-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8" />
                         <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                 </span>
-                <input type="text" id="searchInput" class="search-input" placeholder="" autocomplete="off">
+                <input type="text" id="searchInput" class="search-input"
+                    placeholder="Search papers, datasets, code, and ideas..." autocomplete="off">
+                <span class="search-shortcut-hint">
+                    <kbd class="kbd">Ctrl</kbd><kbd class="kbd">K</kbd>
+                </span>
                 <button class="search-btn" id="searchBtn">
-                    <span class="search-btn-text">Search</span>
                     <span class="search-btn-icon">→</span>
                 </button>
             </div>
-            <!-- Source Filter -->
-            <div class="search-filters">
-                <button class="filter-chip active" data-source="all">All Sources</button>
-                <button class="filter-chip" data-source="arxiv">ArXiv</button>
-                <button class="filter-chip" data-source="semantic_scholar">Semantic Scholar</button>
-                <button class="filter-chip" data-source="crossref">Crossref</button>
-                <button class="filter-chip" data-source="openalex">OpenAlex</button>
+            <!-- Content-type Tabs -->
+            <div class="content-type-tabs" id="contentTypeTabs">
+                <button class="type-tab active" data-type="all">All Results</button>
+                <button class="type-tab" data-type="papers">Papers</button>
+                <button class="type-tab" data-type="code">Code</button>
+                <button class="type-tab" data-type="datasets">Datasets</button>
+                <button class="type-tab" data-type="authors">Authors</button>
+                <button class="type-tab" data-type="citations">Citations</button>
             </div>
         </div>
 
         <!-- Stats -->
         <div class="hero-stats">
             <div class="stat-item">
-                <span class="stat-number" data-count="25000000">25M+</span>
+                <span class="stat-number">25M+</span>
                 <span class="stat-label">Papers indexed</span>
             </div>
             <div class="stat-item">
@@ -59,30 +63,100 @@
     </div>
 </section>
 
-<!-- Results Section -->
-<section class="results-section" id="resultsSection" style="display:none;">
-    <div class="results-header">
-        <h2 class="results-title">
-            <span class="results-icon">📄</span>
-            Results for "<span id="resultsQuery"></span>"
-        </h2>
-        <span class="results-count" id="resultsCount"></span>
-    </div>
+<!-- Results Layout (sidebar + main) -->
+<section class="results-section" id="resultsSection">
+    <!-- Left Sidebar: Advanced Filters -->
+    <aside class="filters-sidebar" id="filtersSidebar">
+        <!-- Source Filter -->
+        <div class="sidebar-group">
+            <h4 class="sidebar-group-title">SOURCE</h4>
+            <div class="source-filter-list">
+                <button class="source-chip active" data-source="all">All Sources</button>
+                <button class="source-chip" data-source="arxiv">ArXiv</button>
+                <button class="source-chip" data-source="semantic_scholar">Semantic Scholar</button>
+                <button class="source-chip" data-source="crossref">Crossref</button>
+                <button class="source-chip" data-source="openalex">OpenAlex</button>
+            </div>
+        </div>
 
-    <!-- Loading Skeleton -->
-    <div class="loading-container" id="loadingContainer" style="display:none;">
-        <div class="loader-spinner"></div>
-        <p class="loader-text">Searching research databases...</p>
-    </div>
+        <!-- Advanced Filters -->
+        <div class="sidebar-group">
+            <h4 class="sidebar-group-title">ADVANCED FILTERS</h4>
+            <label class="filter-checkbox-row">
+                <input type="checkbox" id="filterPeerReviewed" class="filter-checkbox">
+                <span class="checkbox-custom"></span>
+                Peer Reviewed
+            </label>
+            <label class="filter-checkbox-row">
+                <input type="checkbox" id="filterOpenAccess" class="filter-checkbox">
+                <span class="checkbox-custom"></span>
+                Open Access
+            </label>
+            <label class="filter-checkbox-row">
+                <input type="checkbox" id="filterHasCode" class="filter-checkbox">
+                <span class="checkbox-custom"></span>
+                Has Codebase
+            </label>
+        </div>
 
-    <!-- Paper Cards Grid -->
-    <div class="papers-grid" id="papersGrid"></div>
+        <!-- Domain Filters -->
+        <div class="sidebar-group">
+            <h4 class="sidebar-group-title">DOMAIN</h4>
+            <div class="domain-list">
+                <button class="domain-item active" data-domain="all">All Fields</button>
+                <button class="domain-item" data-domain="neural-networks">Neural Networks</button>
+                <button class="domain-item" data-domain="nlp">NLP</button>
+                <button class="domain-item" data-domain="computer-vision">Computer Vision</button>
+                <button class="domain-item" data-domain="quantum">Quantum Computing</button>
+                <button class="domain-item" data-domain="biotech">Biotechnology</button>
+                <button class="domain-item" data-domain="climate">Climate Science</button>
+                <button class="domain-item" data-domain="robotics">Robotics</button>
+            </div>
+        </div>
 
-    <!-- No Results -->
-    <div class="no-results" id="noResults" style="display:none;">
-        <span class="no-results-icon">🔭</span>
-        <h3>No papers found</h3>
-        <p>Try different keywords or broaden your search.</p>
+        <!-- Year Range Slider -->
+        <div class="sidebar-group">
+            <h4 class="sidebar-group-title">PUBLICATION YEAR</h4>
+            <div class="year-slider-container">
+                <div class="year-range-display">
+                    <span id="yearFrom">2010</span>
+                    <span>–</span>
+                    <span id="yearTo">2025</span>
+                </div>
+                <div class="dual-range-wrapper">
+                    <input type="range" id="yearSliderFrom" class="range-slider range-slider-from" min="2000" max="2025"
+                        value="2010">
+                    <input type="range" id="yearSliderTo" class="range-slider range-slider-to" min="2000" max="2025"
+                        value="2025">
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Results Area -->
+    <div class="results-main">
+        <div class="results-header">
+            <h2 class="results-title">
+                Results for "<span id="resultsQuery"></span>"
+            </h2>
+            <span class="results-count" id="resultsCount"></span>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading-container" id="loadingContainer">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">Searching research databases...</p>
+        </div>
+
+        <!-- Paper Cards -->
+        <div class="papers-grid" id="papersGrid"></div>
+
+        <!-- No Results -->
+        <div class="no-results" id="noResults">
+            <span class="no-results-icon">🔭</span>
+            <h3>No papers found</h3>
+            <p>Try different keywords or broaden your search.</p>
+        </div>
     </div>
 </section>
 
@@ -102,13 +176,13 @@
         </div>
         <div class="feature-card">
             <span class="feature-icon">🔖</span>
-            <h3>Smart Bookmarks</h3>
+            <h3>Smart Collections</h3>
             <p>Save papers to your library. Pick up where you left off anytime.</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🌐</span>
-            <h3>Multi-Source</h3>
-            <p>Aggregates from multiple databases for comprehensive coverage.</p>
+            <span class="feature-icon">🤖</span>
+            <h3>AI Chat</h3>
+            <p>Ask questions about any paper and get intelligent AI-powered answers instantly.</p>
         </div>
     </div>
 </section>
