@@ -1,24 +1,12 @@
-"""
-Meta Research - Research Paper Discovery Service
-Main Flask Application
-"""
-# ---------------------------------------------------------------------------
-# NOTE: Chat with Paper requires a free Gemini API key.
-#       Set env var GEMINI_API_KEY before running.
-#       Get one at: https://aistudio.google.com/app/apikey
-# ---------------------------------------------------------------------------
 import os
 from dotenv import load_dotenv
-load_dotenv()  # Reads .env file 
+load_dotenv()
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
-# ---------------------------------------------------------------------------
-# App Configuration
-# ---------------------------------------------------------------------------
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24).hex()
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -28,10 +16,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-
-# ---------------------------------------------------------------------------
-# Database Models
-# ---------------------------------------------------------------------------
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -51,25 +35,20 @@ class User(UserMixin, db.Model):
 class Bookmark(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    paper_id = db.Column(db.String(256), nullable=False)      # ArXiv ID or unique key
+    paper_id = db.Column(db.String(256), nullable=False)      
     title = db.Column(db.String(512), nullable=False)
     authors = db.Column(db.String(512))
     summary = db.Column(db.Text)
     pdf_url = db.Column(db.String(512))
-    source = db.Column(db.String(64))                          # e.g. "arxiv"
+    source = db.Column(db.String(64))                          
     saved_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Prevent duplicate bookmarks per user
     __table_args__ = (db.UniqueConstraint('user_id', 'paper_id', name='uq_user_paper'),)
 
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-# ---------------------------------------------------------------------------
-# Auth Routes
-# ---------------------------------------------------------------------------
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -81,7 +60,6 @@ def signup():
         email = data.get('email', '').strip()
         password = data.get('password', '')
 
-        # Validation
         if not username or not email or not password:
             msg = 'All fields are required.'
             return (jsonify({'error': msg}), 400) if request.is_json else (flash(msg, 'error'), redirect(url_for('signup')))[1]
@@ -127,10 +105,6 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# ---------------------------------------------------------------------------
-# Page Routes
-# ---------------------------------------------------------------------------
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -146,10 +120,6 @@ def bookmarks_page():
 def paper_chat(paper_id):
     """Paper detail + chat page."""
     return render_template('paper_chat.html', paper_id=paper_id)
-
-# ---------------------------------------------------------------------------
-# API Routes
-# ---------------------------------------------------------------------------
 
 @app.route('/api/search')
 def api_search():
@@ -266,10 +236,6 @@ def api_summarize():
         return jsonify({'error': result['error']}), 500
     return jsonify({'summary': result['summary']})
 
-
-# ---------------------------------------------------------------------------
-# Start
-# ---------------------------------------------------------------------------
 with app.app_context():
     db.create_all()
 

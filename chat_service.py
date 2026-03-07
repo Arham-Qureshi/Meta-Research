@@ -1,19 +1,4 @@
-"""
-chat_service.py – AI Chat Service for Meta Research
-====================================================
-
-Uses two AI backends:
-  - Google Gemini (gemini-2.0-flash) for paper SUMMARIZATION.
-  - Groq (llama-3.3-70b-versatile) for the "Chat with Paper" Q&A feature.
-
-Setup:
-    GEMINI_API_KEY – free key from https://aistudio.google.com/app/apikey
-    GROQ_API_KEY   – free key from https://console.groq.com
-"""
-
 import os
-
-# Local pre-summarization (token optimization)
 try:
     from sumy.parsers.plaintext import PlaintextParser
     from sumy.nlp.tokenizers import Tokenizer
@@ -34,18 +19,12 @@ try:
 except ImportError:
     GROQ_AVAILABLE = False
 
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
-
-# Gemini (for summarization)
 API_KEY = os.environ.get('GEMINI_API_KEY', '')
 MODEL_NAME = 'gemini-2.0-flash'
 
 if GENAI_AVAILABLE and API_KEY:
     genai.configure(api_key=API_KEY)
 
-# Groq (for chat with paper)
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_MODEL = 'llama-3.3-70b-versatile'
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_AVAILABLE and GROQ_API_KEY else None
@@ -60,27 +39,10 @@ def _get_model():
     return genai.GenerativeModel(MODEL_NAME)
 
 
-# ---------------------------------------------------------------------------
-# Local Pre-Summarization (Token Optimization)
-# ---------------------------------------------------------------------------
-
 def _local_presummarize(text: str, sentence_count: int = 6) -> str:
-    """
-    Use sumy's LSA algorithm to extract the most important sentences
-    from a long text. This runs 100% locally with zero API cost.
-
-    Args:
-        text: The original abstract/summary text.
-        sentence_count: Number of key sentences to extract (default: 6).
-
-    Returns:
-        A shortened version of the text (5-7 sentences), or the
-        original text if sumy is unavailable or the text is already short.
-    """
     if not SUMY_AVAILABLE:
         return text
 
-    # If the text is already short (fewer than 8 sentences), don't summarize
     if text.count('.') <= sentence_count + 1:
         return text
 
@@ -90,16 +52,10 @@ def _local_presummarize(text: str, sentence_count: int = 6) -> str:
         summary_sentences = summarizer(parser.document, sentence_count)
         return ' '.join(str(s) for s in summary_sentences)
     except Exception:
-        # If anything goes wrong, just return the original text
         return text
 
 
-# ---------------------------------------------------------------------------
-# Build paper context string
-# ---------------------------------------------------------------------------
-
 def _build_paper_context(paper: dict) -> str:
-    """Build a readable context string from paper metadata."""
     parts = []
     if paper.get('title'):
         parts.append(f"Title: {paper['title']}")
@@ -112,29 +68,13 @@ def _build_paper_context(paper: dict) -> str:
         if isinstance(cats, list):
             cats = ', '.join(cats)
         parts.append(f"Categories: {cats}")
-    # Pre-summarize the abstract locally before sending to AI
     abstract = paper.get('full_summary') or paper.get('summary') or ''
     if abstract:
         abstract = _local_presummarize(abstract)
         parts.append(f"Abstract:\n{abstract}")
     return '\n'.join(parts)
 
-
-# ---------------------------------------------------------------------------
-# Chat with Paper
-# ---------------------------------------------------------------------------
-
 def chat_with_paper(paper: dict, user_message: str) -> dict:
-    """
-    Send a user question about a paper to Groq and return the AI response.
-
-    Args:
-        paper: Dict with paper metadata (title, authors, summary, etc.)
-        user_message: The user's question.
-
-    Returns:
-        {'reply': str, 'error': str|None}
-    """
     if not GROQ_AVAILABLE:
         return {
             'reply': '',
@@ -173,22 +113,7 @@ User's question: {user_message}"""
     except Exception as e:
         return {'reply': '', 'error': f'AI request failed: {str(e)}'}
 
-
-# ---------------------------------------------------------------------------
-# Summarize Paper (comprehensive summary + use cases)
-# ---------------------------------------------------------------------------
-
 def summarize_paper(paper: dict) -> dict:
-    """
-    Generate a comprehensive summary of a paper including key findings,
-    methodology, and practical use cases.
-
-    Args:
-        paper: Dict with paper metadata.
-
-    Returns:
-        {'summary': str, 'error': str|None}
-    """
     if not GROQ_AVAILABLE:
         return {
             'summary': '',
@@ -205,31 +130,11 @@ def summarize_paper(paper: dict) -> dict:
     context = _build_paper_context(paper)
 
     system_prompt = """You are an expert research analyst. Given an academic paper, provide a comprehensive and insightful summary. Structure your response as follows:
-
-## Overview
-A clear, accessible explanation of what this paper is about (2-3 sentences).
-
-## Key Contributions
-The main findings, contributions, or innovations of this paper.
-
-## Methodology
-How the authors approached the problem (techniques, datasets, experiments).
-
-## Results & Impact
-Key results, performance metrics, and their significance.
-
-## Practical Use Cases
-Real-world applications and scenarios where this research could be applied. Who would benefit from this work? How could it be used in industry or further research?
-
-## Limitations
-Any noted limitations or areas for future work.
-
-Provide a thorough, well-organized summary. Use markdown formatting. Be informative but keep it accessible to someone who hasn't read the full paper."""
+    Provide a thorough, well-organized summary. Use markdown formatting. Be informative but keep it accessible to someone who hasn't read the full paper."""
 
     user_prompt = f"""--- PAPER ---
 {context}
 --- END PAPER ---"""
-
     try:
         chat_completion = groq_client.chat.completions.create(
             messages=[
