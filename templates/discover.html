@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Explore – Meta Research{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/discover.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="discover-page" id="discoverPage">
+    <div class="discover-header">
+        <span class="discover-badge">EXPLORE & DISCOVER</span>
+        <h1 class="discover-title">
+            What's <span class="gradient-text">trending</span> in science?
+        </h1>
+        <p class="discover-subtitle">
+            Popular research papers and the latest breakthroughs — updated every few hours.
+        </p>
+    </div>
+
+    <!-- ══ Trending Papers ════════════════════════════════════ -->
+    <div class="discover-section" id="trendingSection">
+        <div class="section-header">
+            <div class="section-header-left">
+                <span class="section-icon">🔥</span>
+                <h2 class="section-label">Trending Papers <span class="section-count" id="trendingCount"></span></h2>
+            </div>
+            <div class="section-header-right">
+                <button class="refresh-btn" id="refreshTrending" title="Refresh trending papers">
+                    <span class="refresh-icon">↻</span> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div class="skeleton-grid" id="trendingLoading">
+            <div class="skeleton-card">
+                <div class="skeleton-line h24 w70"></div>
+                <div class="skeleton-line w50"></div>
+                <div class="skeleton-line w90"></div>
+                <div class="skeleton-line w40"></div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-line h24 w70"></div>
+                <div class="skeleton-line w50"></div>
+                <div class="skeleton-line w90"></div>
+                <div class="skeleton-line w40"></div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-line h24 w70"></div>
+                <div class="skeleton-line w50"></div>
+                <div class="skeleton-line w90"></div>
+                <div class="skeleton-line w40"></div>
+            </div>
+        </div>
+
+        <!-- Papers grid (populated by JS) -->
+        <div class="trending-grid" id="trendingGrid"></div>
+    </div>
+
+    <!-- ══ Science News ═══════════════════════════════════════ -->
+    <div class="discover-section" id="newsSection">
+        <div class="section-header">
+            <div class="section-header-left">
+                <span class="section-icon">📡</span>
+                <h2 class="section-label">Science & Research News <span class="section-count" id="newsCount"></span>
+                </h2>
+            </div>
+            <div class="section-header-right">
+                <button class="refresh-btn" id="refreshNews" title="Refresh news">
+                    <span class="refresh-icon">↻</span> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div class="skeleton-grid" id="newsLoading">
+            <div class="skeleton-card">
+                <div class="skeleton-line h24 w90"></div>
+                <div class="skeleton-line w70"></div>
+                <div class="skeleton-line w50"></div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-line h24 w90"></div>
+                <div class="skeleton-line w70"></div>
+                <div class="skeleton-line w50"></div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-line h24 w90"></div>
+                <div class="skeleton-line w70"></div>
+                <div class="skeleton-line w50"></div>
+            </div>
+        </div>
+
+        <!-- News grid (populated by JS) -->
+        <div class="news-grid" id="newsGrid"></div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/discover.js') }}"></script>
+{% endblock %}

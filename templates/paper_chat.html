@@ -3,6 +3,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/graph.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -11,11 +12,84 @@
     <a href="{{ url_for('index') }}" class="chat-back-link">← Back to Search</a>
 
     <div class="chat-layout">
-        <!-- ===== Left Panel: Paper Info ===== -->
+        <!-- ===== Left Panel: Paper Info + Graph ===== -->
         <div class="paper-info-panel" id="paperInfoPanel">
             <div class="paper-info-loading" id="paperInfoLoading">
                 <div class="loader-spinner"></div>
                 <p class="loader-text">Loading paper info...</p>
+            </div>
+
+            <!-- Paper info gets injected here by paper_loader.js -->
+            <div id="paperInfoContent"></div>
+
+            <!-- Tab bar (shown after paper loads) -->
+            <div class="paper-tabs" id="paperTabs">
+                <button class="paper-tab active" data-tab="infoTab">
+                    <span class="paper-tab-icon">📄</span> Info
+                </button>
+                <button class="paper-tab" data-tab="graphTab">
+                    <span class="paper-tab-icon">🕸️</span> Citation Network
+                </button>
+            </div>
+
+            <!-- Info Tab Content (default) -->
+            <div class="tab-content active" id="infoTab">
+                <div id="paperDetails"></div>
+            </div>
+
+            <!-- Graph Tab Content -->
+            <div class="tab-content" id="graphTab">
+                <div class="graph-section">
+                    <div class="graph-toolbar">
+                        <div class="graph-toolbar-left">
+                            <div class="graph-stats">
+                                <span class="graph-stat">
+                                    <span class="graph-stat-dot dot-center"></span>
+                                    <span>This paper</span>
+                                </span>
+                                <span class="graph-stat">
+                                    <span class="graph-stat-dot dot-citation"></span>
+                                    <span id="citationCount">0 citations</span>
+                                </span>
+                                <span class="graph-stat">
+                                    <span class="graph-stat-dot dot-reference"></span>
+                                    <span id="referenceCount">0 references</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="graph-toolbar-right">
+                            <button class="graph-control-btn" id="graphZoomIn" title="Zoom in">+</button>
+                            <button class="graph-control-btn" id="graphZoomOut" title="Zoom out">−</button>
+                            <button class="graph-control-btn" id="graphFit" title="Fit to view">⊞</button>
+                            <button class="graph-control-btn" id="graphRelayout" title="Re-layout">↻</button>
+                        </div>
+                    </div>
+
+                    <div class="graph-container" id="graphContainer">
+                        <!-- Loading state -->
+                        <div class="graph-loading" id="graphLoading">
+                            <div class="loader-spinner"></div>
+                            <span class="graph-loading-text">Building citation network...</span>
+                        </div>
+
+                        <!-- Empty state -->
+                        <div class="graph-empty" id="graphEmpty" style="display:none;">
+                            <span class="graph-empty-icon">🕸️</span>
+                            <h4>No Citation Data</h4>
+                            <p>Could not find citation information for this paper.</p>
+                        </div>
+
+                        <!-- Cytoscape canvas -->
+                        <div class="graph-canvas" id="graphCanvas"></div>
+
+                        <!-- Tooltip -->
+                        <div class="graph-tooltip" id="graphTooltip">
+                            <div class="graph-tooltip-title"></div>
+                            <div class="graph-tooltip-authors"></div>
+                            <div class="graph-tooltip-meta"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -64,87 +138,15 @@
         </div>
     </div>
 </section>
+{% endblock %}
 
-<!-- Paper data will be fetched via JS using the paper_id -->
+{% block scripts %}
 <script>
-    // Paper ID passed from Flask route
+    // Paper ID passed from Flask route (minimal inline – just the data binding)
     window.__PAPER_ID__ = {{ paper_id | tojson }};
-
-    // We fetch the paper data from search API and populate the left panel + chat context
-    (async function loadPaperData() {
-        const paperId = window.__PAPER_ID__;
-        const infoPanel = document.getElementById('paperInfoPanel');
-        const loadingEl = document.getElementById('paperInfoLoading');
-
-        // Try searching by paper ID to get full metadata
-        // First try ArXiv, then Semantic Scholar
-        let paper = null;
-
-        try {
-            // Attempt ArXiv search with the paper ID
-            const res = await fetch(`/api/search?q=${encodeURIComponent(paperId)}&source=all&max=5`);
-            const data = await res.json();
-
-            if (data.papers && data.papers.length > 0) {
-                // Find exact match or use first result
-                paper = data.papers.find(p => p.id === paperId) || data.papers[0];
-            }
-        } catch (err) {
-            console.error('Failed to fetch paper:', err);
-        }
-
-        // If we couldn't find the paper, show a message with a manual search option
-        if (!paper) {
-            loadingEl.innerHTML = `
-                <span style="font-size:2rem;">🔭</span>
-                <h3>Paper not found</h3>
-                <p class="loader-text">Could not load paper with ID: ${paperId}</p>
-                <a href="/" class="btn btn-primary" style="margin-top:1rem;">← Back to Search</a>
-            `;
-            return;
-        }
-
-        // Set global paper data for chat.js to use
-        window.__PAPER_DATA__ = paper;
-
-        // Populate the info panel
-        const categories = (paper.categories || [])
-            .map(c => `<span class="paper-info-cat-chip">${c}</span>`)
-            .join('');
-
-        infoPanel.innerHTML = `
-            <span class="paper-info-badge">
-                <span>📄</span> ${paper.source_name || paper.source || 'Research Paper'}
-            </span>
-            <h1 class="paper-info-title">${escapeH(paper.title)}</h1>
-            <p class="paper-info-authors">${escapeH(paper.authors || 'Unknown authors')}</p>
-            <p class="paper-info-date">${paper.published ? 'Published: ' + escapeH(paper.published) : ''}</p>
-            
-            <h4 class="paper-info-section-title">Abstract</h4>
-            <p class="paper-info-abstract">${escapeH(paper.full_summary || paper.summary || 'No abstract available.')}</p>
-            
-            ${categories ? '<h4 class="paper-info-section-title">Categories</h4><div class="paper-info-categories">' + categories + '</div>' : ''}
-            
-            <div class="paper-info-actions">
-                ${paper.pdf_url ? `<a href="${paper.pdf_url}" target="_blank" rel="noopener" class="btn btn-download"><span>📥</span> Download PDF</a>` : ''}
-                ${paper.abstract_url ? `<a href="${paper.abstract_url}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.82rem;"><span>🔗</span> View Page</a>` : ''}
-                <button id="summarizeBtn" class="btn btn-summarize"><span>📝</span> Full Summary & Use Cases</button>
-            </div>
-        `;
-
-        // Re-initialize chat.js now that __PAPER_DATA__ is set
-        // chat.js registers __initChatAfterLoad on window
-        if (typeof window.__initChatAfterLoad === 'function') {
-            window.__initChatAfterLoad();
-        }
-    })();
-
-    function escapeH(text) {
-        if (!text) return '';
-        const d = document.createElement('div');
-        d.textContent = text;
-        return d.innerHTML;
-    }
 </script>
+<script src="{{ url_for('static', filename='js/paper_loader.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+<script src="{{ url_for('static', filename='js/citation_graph.js') }}"></script>
 {% endblock %}
