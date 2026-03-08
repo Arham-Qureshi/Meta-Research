@@ -299,6 +299,148 @@ def _reconstruct_abstract(inverted_index: dict) -> str:
 
 
 
+# ═══════════════════════════════════════════════════════════════
+#  CITATION GRAPH  –  Uses paper IDs (not text search)
+# ═══════════════════════════════════════════════════════════════
+
+SEMANTIC_SCHOLAR_PAPER_URL = "https://api.semanticscholar.org/graph/v1/paper"
+
+# Rate-limit tracker for Semantic Scholar (100 req/5 min on free tier)
+_ss_last_request_time = 0
+_SS_MIN_INTERVAL = 1.1  # seconds between requests
+
+
+def _ss_rate_limit():
+    """Enforce minimum interval between Semantic Scholar API calls."""
+    global _ss_last_request_time
+    elapsed = time.time() - _ss_last_request_time
+    if elapsed < _SS_MIN_INTERVAL:
+        time.sleep(_SS_MIN_INTERVAL - elapsed)
+    _ss_last_request_time = time.time()
+
+
+def _resolve_paper_id(paper_id: str) -> str:
+    """
+    Normalise a paper ID for the Semantic Scholar API.
+    Accepts: arXiv ID, DOI, Semantic Scholar ID, or OpenAlex ID.
+    Returns the identifier prefixed appropriately.
+    """
+    pid = paper_id.strip()
+
+    # Already a Semantic Scholar 40-char hex ID
+    if len(pid) == 40 and all(c in '0123456789abcdef' for c in pid.lower()):
+        return pid
+
+    # DOI  (e.g. 10.1234/...)
+    if pid.startswith('10.') or pid.startswith('doi:'):
+        doi = pid.replace('doi:', '')
+        return f"DOI:{doi}"
+
+    # ArXiv  (e.g. 2301.12345 or arXiv:2301.12345)
+    arxiv_match = re.match(r'^(?:arXiv:)?(\d{4}\.\d{4,5}(?:v\d+)?)$', pid)
+    if arxiv_match:
+        return f"ArXiv:{arxiv_match.group(1)}"
+
+    # OpenAlex URL → strip to just the ID portion
+    if pid.startswith('https://openalex.org/'):
+        return pid  # Semantic Scholar won't accept this, try DOI fallback
+
+    # Fallback: send as-is (Semantic Scholar will try to resolve)
+    return pid
+
+
+def get_citation_graph(paper_id: str, max_citations: int = 15, max_references: int = 15) -> dict:
+    """
+    Fetch the citation network for a given paper using Semantic Scholar
+    paper-detail API (ID-based, NOT text search).
+
+    Returns {
+        'center': { id, title, authors, year, citationCount },
+        'nodes':  [ { id, label, year, citations, type } ],
+        'edges':  [ { source, target } ],
+        'error':  str | None
+    }
+    """
+    resolved_id = _resolve_paper_id(paper_id)
+    fields = 'title,authors,year,citationCount,citations.title,citations.authors,citations.year,citations.citationCount,references.title,references.authors,references.year,references.citationCount'
+
+    _ss_rate_limit()
+
+    headers = {'User-Agent': 'MetaResearch/1.0 (Academic Research Tool)'}
+
+    try:
+        url = f"{SEMANTIC_SCHOLAR_PAPER_URL}/{resolved_id}"
+        params = {
+            'fields': fields,
+            'limit': max(max_citations, max_references),
+        }
+        resp = requests.get(url, params=params, headers=headers, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as e:
+        return {'center': None, 'nodes': [], 'edges': [], 'error': f'API request failed: {str(e)}'}
+    except ValueError:
+        return {'center': None, 'nodes': [], 'edges': [], 'error': 'Invalid API response'}
+
+    # ── Build center node ───────────────────────────────────────
+    center_id = data.get('paperId', paper_id)
+    center_authors = [a.get('name', '') for a in data.get('authors', [])[:3]]
+    center = {
+        'id': center_id,
+        'title': data.get('title', 'Unknown'),
+        'authors': ', '.join(center_authors),
+        'year': data.get('year'),
+        'citationCount': data.get('citationCount', 0),
+    }
+
+    nodes = [{
+        'id': center_id,
+        'label': center['title'],
+        'year': center['year'],
+        'citations': center['citationCount'],
+        'type': 'center',
+        'authors': center['authors'],
+    }]
+    edges = []
+    seen_ids = {center_id}
+
+    # ── Citations (papers that cite THIS paper) ────────────────
+    for cite in data.get('citations', [])[:max_citations]:
+        cid = cite.get('paperId')
+        if not cid or cid in seen_ids:
+            continue
+        seen_ids.add(cid)
+        c_authors = [a.get('name', '') for a in cite.get('authors', [])[:2]]
+        nodes.append({
+            'id': cid,
+            'label': cite.get('title', 'Untitled'),
+            'year': cite.get('year'),
+            'citations': cite.get('citationCount', 0),
+            'type': 'citation',
+            'authors': ', '.join(c_authors),
+        })
+        edges.append({'source': cid, 'target': center_id})
+
+    # ── References (papers THIS paper cites) ───────────────────
+    for ref in data.get('references', [])[:max_references]:
+        rid = ref.get('paperId')
+        if not rid or rid in seen_ids:
+            continue
+        seen_ids.add(rid)
+        r_authors = [a.get('name', '') for a in ref.get('authors', [])[:2]]
+        nodes.append({
+            'id': rid,
+            'label': ref.get('title', 'Untitled'),
+            'year': ref.get('year'),
+            'citations': ref.get('citationCount', 0),
+            'type': 'reference',
+            'authors': ', '.join(r_authors),
+        })
+        edges.append({'source': center_id, 'target': rid})
+
+    return {'center': center, 'nodes': nodes, 'edges': edges, 'error': None}
+
+
 def search_papers(query: str, source: str = 'all', max_results: int = 10) -> list[dict]:
     results = []
 
