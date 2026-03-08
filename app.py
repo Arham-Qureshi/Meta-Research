@@ -236,8 +236,63 @@ def api_summarize():
         return jsonify({'error': result['error']}), 500
     return jsonify({'summary': result['summary']})
 
+
+# ═══════════════════════════════════════════════════════════════
+#  CITATION GRAPH API
+# ═══════════════════════════════════════════════════════════════
+
+@app.route('/api/paper/graph', methods=['GET'])
+def api_paper_graph():
+    """Return citation/reference network for a paper (uses paper ID, not text search)."""
+    from paper_fetcher import get_citation_graph
+    paper_id = request.args.get('id', '').strip()
+    if not paper_id:
+        return jsonify({'error': 'Paper ID parameter "id" is required.'}), 400
+
+    max_cite = request.args.get('max_citations', 15, type=int)
+    max_ref = request.args.get('max_references', 15, type=int)
+
+    result = get_citation_graph(paper_id, max_citations=max_cite, max_references=max_ref)
+    if result.get('error'):
+        return jsonify({'error': result['error']}), 502
+    return jsonify(result)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  NEWS & TRENDING PAPERS API
+# ═══════════════════════════════════════════════════════════════
+
+@app.route('/api/news')
+def api_news():
+    """Fetch recent science/research news (cached for 5 hours)."""
+    from news_service import get_science_news
+    query = request.args.get('q', None)
+    articles = get_science_news(query=query)
+    return jsonify({'count': len(articles), 'articles': articles})
+
+
+@app.route('/api/trending')
+def api_trending():
+    """Fetch trending/popular recent research papers (cached for 5 hours)."""
+    from news_service import get_trending_papers
+    max_results = request.args.get('max', 12, type=int)
+    papers = get_trending_papers(max_results=max_results)
+    return jsonify({'count': len(papers), 'papers': papers})
+
+
+# ═══════════════════════════════════════════════════════════════
+#  DISCOVER PAGE
+# ═══════════════════════════════════════════════════════════════
+
+@app.route('/discover')
+def discover():
+    """Discover page – trending papers & science news."""
+    return render_template('discover.html')
+
+
 with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
