@@ -34,7 +34,9 @@
                 </a>
                 <a href="{{ url_for('discover') }}"
                     class="nav-link {% if request.endpoint == 'discover' %}active{% endif %}">Explore</a>
-                <a href="#" class="nav-link nav-link-placeholder">Datasets</a>
+                <a href="{{ url_for('citation_graph_page') }}"
+                    class="nav-link {% if request.endpoint == 'citation_graph_page' %}active{% endif %}">Citation
+                    Graph</a>
                 {% if current_user.is_authenticated %}
                 <a href="{{ url_for('bookmarks_page') }}"
                     class="nav-link {% if request.endpoint == 'bookmarks_page' %}active{% endif %}">
