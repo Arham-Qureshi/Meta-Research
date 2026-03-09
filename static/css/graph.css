@@ -288,6 +288,53 @@
     margin-bottom: 0;
 }
 
+/* Source Toggle */
+.cg-source-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 3px;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cg-source-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: #777;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.cg-source-btn:hover {
+    color: #aaa;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.cg-source-btn.active {
+    background: rgba(99, 102, 241, 0.12);
+    color: #a5b4fc;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+.cg-source-icon {
+    font-size: 0.9rem;
+}
+
 /* Paper Results Dropdown */
 .cg-paper-results {
     position: absolute;

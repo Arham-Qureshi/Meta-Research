@@ -39,19 +39,36 @@
     /* ════════════════════════════════════════════════════════════
        STANDALONE PAGE  (/citation-graph)
        ════════════════════════════════════════════════════════════ */
+    function getSelectedSource() {
+        var activeBtn = document.querySelector('.cg-source-btn.active');
+        return activeBtn ? activeBtn.getAttribute('data-source') : 'semantic_scholar';
+    }
+
     function initStandalonePage() {
         var searchInput = document.getElementById('cgSearchInput');
         var searchBtn = document.getElementById('cgSearchBtn');
         var resultsDropdown = document.getElementById('cgPaperResults');
         if (!searchInput) return;
 
+        // Bind source toggle buttons
+        document.querySelectorAll('.cg-source-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.cg-source-btn').forEach(function (b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                // Clear previous results when source changes
+                resultsDropdown.innerHTML = '';
+                resultsDropdown.classList.remove('active');
+            });
+        });
+
         function doSearch() {
             var q = searchInput.value.trim();
             if (!q) return;
-            resultsDropdown.innerHTML = '<div class="cg-paper-result" style="color:#888;text-align:center;">Searching...</div>';
+            var source = getSelectedSource();
+            resultsDropdown.innerHTML = '<div class="cg-paper-result" style="color:#888;text-align:center;">Searching ' + (source === 'openalex' ? 'OpenAlex' : 'Semantic Scholar') + '...</div>';
             resultsDropdown.classList.add('active');
 
-            fetch('/api/search?q=' + encodeURIComponent(q) + '&source=all&max=10')
+            fetch('/api/search?q=' + encodeURIComponent(q) + '&source=' + source + '&max=15')
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     var papers = (data.papers || []).filter(function (p) {
@@ -69,7 +86,6 @@
                             + '<span>' + esc(p.authors || 'Unknown') + '</span>'
                             + '<span>' + esc(p.published || '') + '</span>'
                             + '<span>📊 ' + citCount.toLocaleString() + ' citations</span>'
-                            + '<span>📡 ' + esc(p.source_name || p.source || '') + '</span>'
                             + '</div></div>';
                     }).join('');
 
@@ -122,16 +138,32 @@
         // Destroy previous graph
         if (cy) { cy.destroy(); cy = null; }
 
-        fetch('/api/paper/graph?id=' + encodeURIComponent(paperId) + '&max_citations=20&max_references=20')
-            .then(function (r) { return r.json(); })
+        var source = getSelectedSource();
+        fetch('/api/paper/graph?id=' + encodeURIComponent(paperId) + '&source=' + source + '&max_citations=20&max_references=20')
+            .then(function (r) {
+                if (!r.ok && r.status === 502) {
+                    return r.json().then(function (d) { d._httpStatus = 502; return d; });
+                }
+                return r.json();
+            })
             .then(function (data) {
                 if (loadingEl) loadingEl.style.display = 'none';
 
                 if (data.error || !data.nodes || data.nodes.length === 0) {
                     if (emptyEl) {
                         emptyEl.style.display = 'flex';
+                        var h4El = emptyEl.querySelector('h4');
                         var pEl = emptyEl.querySelector('p');
-                        if (pEl) pEl.textContent = data.error || 'No citation data found.';
+                        var errMsg = data.error || 'No citation data found.';
+                        // Detect 429 rate limit and suggest switching source
+                        if (errMsg.indexOf('429') !== -1) {
+                            if (h4El) h4El.textContent = 'Rate Limited';
+                            if (pEl) pEl.innerHTML = 'Semantic Scholar rate limit reached. '
+                                + '<strong>Try switching to OpenAlex</strong> using the toggle above, or wait 1–2 minutes.';
+                        } else {
+                            if (h4El) h4El.textContent = 'No Citation Data';
+                            if (pEl) pEl.textContent = errMsg;
+                        }
                     }
                     return;
                 }

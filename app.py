@@ -5,7 +5,8 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24).hex()
@@ -44,6 +45,17 @@ class Bookmark(db.Model):
     saved_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     __table_args__ = (db.UniqueConstraint('user_id', 'paper_id', name='uq_user_paper'),)
+
+
+class GraphCache(db.Model):
+    """Cache citation graph JSON to reduce external API calls."""
+    id = db.Column(db.Integer, primary_key=True)
+    paper_id = db.Column(db.String(256), nullable=False)
+    source = db.Column(db.String(64), nullable=False)           # 'semantic_scholar' | 'openalex'
+    graph_json = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('paper_id', 'source', name='uq_paper_source'),)
 
 
 @login_manager.user_loader
@@ -243,18 +255,41 @@ def api_summarize():
 
 @app.route('/api/paper/graph', methods=['GET'])
 def api_paper_graph():
-    """Return citation/reference network for a paper (uses paper ID, not text search)."""
+    """Return citation/reference network for a paper. Supports source selection and caching."""
     from paper_fetcher import get_citation_graph
     paper_id = request.args.get('id', '').strip()
     if not paper_id:
         return jsonify({'error': 'Paper ID parameter "id" is required.'}), 400
 
+    source = request.args.get('source', 'semantic_scholar').strip()
+    if source not in ('semantic_scholar', 'openalex'):
+        source = 'semantic_scholar'
+
     max_cite = request.args.get('max_citations', 15, type=int)
     max_ref = request.args.get('max_references', 15, type=int)
 
-    result = get_citation_graph(paper_id, max_citations=max_cite, max_references=max_ref)
+    # ── Check cache first ──
+    cache_entry = GraphCache.query.filter_by(paper_id=paper_id, source=source).first()
+    if cache_entry and (datetime.utcnow() - cache_entry.created_at) < timedelta(days=7):
+        return jsonify(json.loads(cache_entry.graph_json))
+
+    # ── Fetch from API ──
+    result = get_citation_graph(paper_id, max_citations=max_cite, max_references=max_ref, source=source)
     if result.get('error'):
         return jsonify({'error': result['error']}), 502
+
+    # ── Save to cache ──
+    try:
+        if cache_entry:
+            cache_entry.graph_json = json.dumps(result)
+            cache_entry.created_at = datetime.utcnow()
+        else:
+            cache_entry = GraphCache(paper_id=paper_id, source=source, graph_json=json.dumps(result))
+            db.session.add(cache_entry)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
     return jsonify(result)
 
 

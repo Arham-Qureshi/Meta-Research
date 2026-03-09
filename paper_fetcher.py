@@ -310,7 +310,7 @@ SEMANTIC_SCHOLAR_PAPER_URL = "https://api.semanticscholar.org/graph/v1/paper"
 
 # Rate-limit tracker for Semantic Scholar (100 req/5 min on free tier)
 _ss_last_request_time = 0
-_SS_MIN_INTERVAL = 1.1  # seconds between requests
+_SS_MIN_INTERVAL = 1.5  # seconds between requests (stay well within 100 req/5min)
 
 
 def _ss_rate_limit():
@@ -352,9 +352,10 @@ def _resolve_paper_id(paper_id: str) -> str:
     return pid
 
 
-def get_citation_graph(paper_id: str, max_citations: int = 20, max_references: int = 20) -> dict:
+def get_citation_graph(paper_id: str, max_citations: int = 20, max_references: int = 20,
+                       source: str = 'semantic_scholar') -> dict:
     """
-    Fetch citation network using Semantic Scholar (primary) with OpenAlex fallback.
+    Fetch citation network from the user's chosen source. No automatic fallback.
     All responses are strict JSON.
 
     Returns {
@@ -365,16 +366,10 @@ def get_citation_graph(paper_id: str, max_citations: int = 20, max_references: i
         'error':  str | None
     }
     """
-    # Try Semantic Scholar first
-    result = _graph_from_semantic_scholar(paper_id, max_citations, max_references)
-
-    # Fallback to OpenAlex if sparse (< 5 nodes) or failed
-    if result.get('error') or len(result.get('nodes', [])) < 5:
-        oa_result = _graph_from_openalex(paper_id, max_citations, max_references)
-        if not oa_result.get('error') and len(oa_result.get('nodes', [])) >= len(result.get('nodes', [])):
-            return oa_result
-
-    return result
+    if source == 'openalex':
+        return _graph_from_openalex(paper_id, max_citations, max_references)
+    else:
+        return _graph_from_semantic_scholar(paper_id, max_citations, max_references)
 
 
 def _graph_from_semantic_scholar(paper_id: str, max_citations: int, max_references: int) -> dict:
@@ -396,13 +391,37 @@ def _graph_from_semantic_scholar(paper_id: str, max_citations: int, max_referenc
         resp.raise_for_status()
         data = resp.json()
     except requests.RequestException as e:
-        return {'center': None, 'nodes': [], 'edges': [], 'source': 'semantic_scholar',
+        # On 429, try to get at least center node info from a lighter endpoint
+        center_info = _ss_get_basic_info(resolved_id)
+        return {'center': center_info, 'nodes': [], 'edges': [], 'source': 'semantic_scholar',
                 'error': f'Semantic Scholar API failed: {str(e)}'}
     except ValueError:
         return {'center': None, 'nodes': [], 'edges': [], 'source': 'semantic_scholar',
                 'error': 'Invalid JSON from Semantic Scholar'}
 
     return _build_graph_from_ss_data(data, paper_id, max_citations, max_references)
+
+
+def _ss_get_basic_info(resolved_id: str) -> dict:
+    """Try to get at least center paper DOI/title from a lightweight S.S. call."""
+    _ss_rate_limit()
+    try:
+        resp = requests.get(
+            f"{SEMANTIC_SCHOLAR_PAPER_URL}/{resolved_id}",
+            params={'fields': 'title,externalIds,year,citationCount,authors'},
+            headers={'User-Agent': 'MetaResearch/1.0'}, timeout=10
+        )
+        if resp.status_code == 200:
+            d = resp.json()
+            return {
+                'id': d.get('paperId', ''), 'title': d.get('title', 'Unknown'),
+                'authors': ', '.join(a.get('name', '') for a in d.get('authors', [])[:3]),
+                'year': d.get('year'), 'citationCount': d.get('citationCount', 0),
+                'doi': _extract_doi(d.get('externalIds')),
+            }
+    except Exception:
+        pass
+    return None
 
 
 def _extract_doi(ext_ids):
@@ -463,12 +482,48 @@ def _build_graph_from_ss_data(data, paper_id, max_citations, max_references):
     return {'center': center, 'nodes': nodes, 'edges': edges, 'source': 'semantic_scholar', 'error': None}
 
 
-def _graph_from_openalex(paper_id: str, max_citations: int, max_references: int) -> dict:
+def _openalex_search_by_title(title: str) -> str:
+    """Search OpenAlex by title, return the first matching OpenAlex ID or empty string."""
+    try:
+        resp = requests.get(
+            OPENALEX_API_URL,
+            params={'search': title, 'select': 'id', 'per_page': 1, 'mailto': 'metaresearch@example.com'},
+            timeout=10
+        )
+        resp.raise_for_status()
+        results = resp.json().get('results', [])
+        if results:
+            return results[0].get('id', '')
+    except Exception:
+        pass
+    return ''
+
+
+def _graph_from_openalex(paper_id: str, max_citations: int, max_references: int,
+                         fallback_doi: str = '', fallback_title: str = '') -> dict:
     """Build citation graph from OpenAlex API (JSON). Fallback source."""
     # Resolve to OpenAlex-friendly identifier
     oa_id = paper_id.strip()
+
+    # DOI format
     if oa_id.startswith('10.'):
         oa_id = f"https://doi.org/{oa_id}"
+    # Semantic Scholar 40-char hex ID — OpenAlex can't use this directly
+    elif len(oa_id) == 40 and all(c in '0123456789abcdef' for c in oa_id.lower()):
+        # Try fallback DOI first
+        if fallback_doi:
+            oa_id = f"https://doi.org/{fallback_doi}"
+        elif fallback_title:
+            # Search by title to find the OpenAlex ID
+            resolved = _openalex_search_by_title(fallback_title)
+            if resolved:
+                oa_id = resolved
+            else:
+                return {'center': None, 'nodes': [], 'edges': [], 'source': 'openalex',
+                        'error': 'Cannot resolve Semantic Scholar ID for OpenAlex'}
+        else:
+            return {'center': None, 'nodes': [], 'edges': [], 'source': 'openalex',
+                    'error': 'No DOI or title available for OpenAlex fallback'}
 
     fields = 'id,doi,title,authorships,publication_date,cited_by_count,referenced_works,cited_by_api_url'
     try:
