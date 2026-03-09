@@ -281,6 +281,16 @@ def api_trending():
 
 
 # ═══════════════════════════════════════════════════════════════
+#  CITATION GRAPH PAGE
+# ═══════════════════════════════════════════════════════════════
+
+@app.route('/citation-graph')
+def citation_graph_page():
+    """Citation graph page – Connected Papers-style visualization."""
+    return render_template('citation_graph.html')
+
+
+# ═══════════════════════════════════════════════════════════════
 #  DISCOVER PAGE
 # ═══════════════════════════════════════════════════════════════
 

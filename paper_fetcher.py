@@ -50,7 +50,8 @@ def search_arxiv(query: str, max_results: int = 10) -> list[dict]:
             'pdf_url': pdf_url,
             'categories': categories,
             'source': 'arxiv',
-            'source_name': 'ArXiv'
+            'source_name': 'ArXiv',
+            'citations': 0
         })
 
     return papers
@@ -121,7 +122,7 @@ def search_crossref(query: str, max_results: int = 10) -> list[dict]:
         'sort': 'relevance',
         'order': 'desc',
         'select': 'DOI,title,author,abstract,published-print,published-online,'
-                  'container-title,subject,link,URL'
+                  'container-title,subject,link,URL,is-referenced-by-count'
     }
     headers = {
         'User-Agent': 'MetaResearch/1.0 (Academic Research Tool; mailto:metaresearch@example.com)'
@@ -185,10 +186,11 @@ def search_crossref(query: str, max_results: int = 10) -> list[dict]:
         subjects = item.get('subject', [])
         paper_id = doi if doi else f"crossref-{hash(title)}"
 
+        citation_count = item.get('is-referenced-by-count', 0)
         papers.append({
             'id': paper_id,
             'title': title,
-            'authors': ', '.join(authors_list[:10]),  # Limit to 10 authors
+            'authors': ', '.join(authors_list[:10]),
             'summary': abstract[:500] + ('...' if len(abstract) > 500 else ''),
             'full_summary': abstract,
             'published': published_date,
@@ -197,6 +199,7 @@ def search_crossref(query: str, max_results: int = 10) -> list[dict]:
             'categories': subjects[:5],
             'source': 'crossref',
             'source_name': 'Crossref',
+            'citations': citation_count,
             'journal': journal
         })
 
@@ -349,96 +352,227 @@ def _resolve_paper_id(paper_id: str) -> str:
     return pid
 
 
-def get_citation_graph(paper_id: str, max_citations: int = 15, max_references: int = 15) -> dict:
+def get_citation_graph(paper_id: str, max_citations: int = 20, max_references: int = 20) -> dict:
     """
-    Fetch the citation network for a given paper using Semantic Scholar
-    paper-detail API (ID-based, NOT text search).
+    Fetch citation network using Semantic Scholar (primary) with OpenAlex fallback.
+    All responses are strict JSON.
 
     Returns {
-        'center': { id, title, authors, year, citationCount },
-        'nodes':  [ { id, label, year, citations, type } ],
+        'center': { id, title, authors, year, citationCount, doi },
+        'nodes':  [ { id, label, year, citations, type, authors } ],
         'edges':  [ { source, target } ],
+        'source': 'semantic_scholar' | 'openalex',
         'error':  str | None
     }
     """
+    # Try Semantic Scholar first
+    result = _graph_from_semantic_scholar(paper_id, max_citations, max_references)
+
+    # Fallback to OpenAlex if sparse (< 5 nodes) or failed
+    if result.get('error') or len(result.get('nodes', [])) < 5:
+        oa_result = _graph_from_openalex(paper_id, max_citations, max_references)
+        if not oa_result.get('error') and len(oa_result.get('nodes', [])) >= len(result.get('nodes', [])):
+            return oa_result
+
+    return result
+
+
+def _graph_from_semantic_scholar(paper_id: str, max_citations: int, max_references: int) -> dict:
+    """Build citation graph from Semantic Scholar API (JSON)."""
     resolved_id = _resolve_paper_id(paper_id)
-    fields = 'title,authors,year,citationCount,citations.title,citations.authors,citations.year,citations.citationCount,references.title,references.authors,references.year,references.citationCount'
+    fields = ('title,authors,year,citationCount,externalIds,'
+              'citations.title,citations.authors,citations.year,citations.citationCount,citations.externalIds,'
+              'references.title,references.authors,references.year,references.citationCount,references.externalIds')
 
     _ss_rate_limit()
-
     headers = {'User-Agent': 'MetaResearch/1.0 (Academic Research Tool)'}
 
     try:
-        url = f"{SEMANTIC_SCHOLAR_PAPER_URL}/{resolved_id}"
-        params = {
-            'fields': fields,
-            'limit': max(max_citations, max_references),
-        }
-        resp = requests.get(url, params=params, headers=headers, timeout=15)
+        resp = requests.get(
+            f"{SEMANTIC_SCHOLAR_PAPER_URL}/{resolved_id}",
+            params={'fields': fields, 'limit': max(max_citations, max_references)},
+            headers=headers, timeout=15
+        )
         resp.raise_for_status()
         data = resp.json()
     except requests.RequestException as e:
-        return {'center': None, 'nodes': [], 'edges': [], 'error': f'API request failed: {str(e)}'}
+        return {'center': None, 'nodes': [], 'edges': [], 'source': 'semantic_scholar',
+                'error': f'Semantic Scholar API failed: {str(e)}'}
     except ValueError:
-        return {'center': None, 'nodes': [], 'edges': [], 'error': 'Invalid API response'}
+        return {'center': None, 'nodes': [], 'edges': [], 'source': 'semantic_scholar',
+                'error': 'Invalid JSON from Semantic Scholar'}
 
-    # ── Build center node ───────────────────────────────────────
+    return _build_graph_from_ss_data(data, paper_id, max_citations, max_references)
+
+
+def _extract_doi(ext_ids):
+    """Extract DOI from externalIds dict."""
+    if not ext_ids:
+        return ''
+    return ext_ids.get('DOI', '') or ''
+
+
+def _build_graph_from_ss_data(data, paper_id, max_citations, max_references):
+    """Transform Semantic Scholar JSON into our graph format."""
     center_id = data.get('paperId', paper_id)
     center_authors = [a.get('name', '') for a in data.get('authors', [])[:3]]
+    center_doi = _extract_doi(data.get('externalIds'))
     center = {
         'id': center_id,
         'title': data.get('title', 'Unknown'),
         'authors': ', '.join(center_authors),
         'year': data.get('year'),
         'citationCount': data.get('citationCount', 0),
+        'doi': center_doi,
     }
 
     nodes = [{
-        'id': center_id,
-        'label': center['title'],
-        'year': center['year'],
-        'citations': center['citationCount'],
-        'type': 'center',
-        'authors': center['authors'],
+        'id': center_id, 'label': center['title'], 'year': center['year'],
+        'citations': center['citationCount'], 'type': 'center',
+        'authors': center['authors'], 'doi': center_doi,
     }]
     edges = []
     seen_ids = {center_id}
 
-    # ── Citations (papers that cite THIS paper) ────────────────
     for cite in data.get('citations', [])[:max_citations]:
         cid = cite.get('paperId')
         if not cid or cid in seen_ids:
             continue
         seen_ids.add(cid)
-        c_authors = [a.get('name', '') for a in cite.get('authors', [])[:2]]
+        authors = ', '.join(a.get('name', '') for a in cite.get('authors', [])[:2])
         nodes.append({
-            'id': cid,
-            'label': cite.get('title', 'Untitled'),
-            'year': cite.get('year'),
-            'citations': cite.get('citationCount', 0),
-            'type': 'citation',
-            'authors': ', '.join(c_authors),
+            'id': cid, 'label': cite.get('title', 'Untitled'), 'year': cite.get('year'),
+            'citations': cite.get('citationCount', 0), 'type': 'citation',
+            'authors': authors, 'doi': _extract_doi(cite.get('externalIds')),
         })
         edges.append({'source': cid, 'target': center_id})
 
-    # ── References (papers THIS paper cites) ───────────────────
     for ref in data.get('references', [])[:max_references]:
         rid = ref.get('paperId')
         if not rid or rid in seen_ids:
             continue
         seen_ids.add(rid)
-        r_authors = [a.get('name', '') for a in ref.get('authors', [])[:2]]
+        authors = ', '.join(a.get('name', '') for a in ref.get('authors', [])[:2])
         nodes.append({
-            'id': rid,
-            'label': ref.get('title', 'Untitled'),
-            'year': ref.get('year'),
-            'citations': ref.get('citationCount', 0),
-            'type': 'reference',
-            'authors': ', '.join(r_authors),
+            'id': rid, 'label': ref.get('title', 'Untitled'), 'year': ref.get('year'),
+            'citations': ref.get('citationCount', 0), 'type': 'reference',
+            'authors': authors, 'doi': _extract_doi(ref.get('externalIds')),
         })
         edges.append({'source': center_id, 'target': rid})
 
-    return {'center': center, 'nodes': nodes, 'edges': edges, 'error': None}
+    return {'center': center, 'nodes': nodes, 'edges': edges, 'source': 'semantic_scholar', 'error': None}
+
+
+def _graph_from_openalex(paper_id: str, max_citations: int, max_references: int) -> dict:
+    """Build citation graph from OpenAlex API (JSON). Fallback source."""
+    # Resolve to OpenAlex-friendly identifier
+    oa_id = paper_id.strip()
+    if oa_id.startswith('10.'):
+        oa_id = f"https://doi.org/{oa_id}"
+
+    fields = 'id,doi,title,authorships,publication_date,cited_by_count,referenced_works,cited_by_api_url'
+    try:
+        resp = requests.get(
+            f"{OPENALEX_API_URL}/{oa_id}",
+            params={'select': fields, 'mailto': 'metaresearch@example.com'},
+            timeout=15
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except (requests.RequestException, ValueError):
+        return {'center': None, 'nodes': [], 'edges': [], 'source': 'openalex',
+                'error': 'OpenAlex API failed'}
+
+    # Center node
+    oa_center_id = data.get('id', '')
+    doi_raw = data.get('doi', '') or ''
+    doi = doi_raw.replace('https://doi.org/', '') if doi_raw else ''
+    center_authors = ', '.join(
+        a.get('author', {}).get('display_name', '') for a in data.get('authorships', [])[:3]
+    )
+    year_str = (data.get('publication_date') or '')[:4]
+    year = int(year_str) if year_str.isdigit() else None
+
+    center = {
+        'id': oa_center_id, 'title': data.get('title', 'Unknown'),
+        'authors': center_authors, 'year': year,
+        'citationCount': data.get('cited_by_count', 0), 'doi': doi,
+    }
+    nodes = [{
+        'id': oa_center_id, 'label': center['title'], 'year': year,
+        'citations': center['citationCount'], 'type': 'center',
+        'authors': center_authors, 'doi': doi,
+    }]
+    edges = []
+    seen_ids = {oa_center_id}
+
+    # References (papers this paper cites) — IDs are in referenced_works
+    ref_ids = data.get('referenced_works', [])[:max_references]
+    if ref_ids:
+        ref_filter = '|'.join(ref_ids)
+        try:
+            rr = requests.get(
+                OPENALEX_API_URL,
+                params={
+                    'filter': f'openalex:{ref_filter}',
+                    'select': 'id,doi,title,authorships,publication_date,cited_by_count',
+                    'per_page': max_references,
+                    'mailto': 'metaresearch@example.com',
+                },
+                timeout=15
+            )
+            rr.raise_for_status()
+            for item in rr.json().get('results', []):
+                nid = item.get('id', '')
+                if nid in seen_ids:
+                    continue
+                seen_ids.add(nid)
+                n_doi = (item.get('doi') or '').replace('https://doi.org/', '')
+                n_year_str = (item.get('publication_date') or '')[:4]
+                nodes.append({
+                    'id': nid, 'label': item.get('title', 'Untitled'),
+                    'year': int(n_year_str) if n_year_str.isdigit() else None,
+                    'citations': item.get('cited_by_count', 0), 'type': 'reference',
+                    'authors': ', '.join(a.get('author', {}).get('display_name', '') for a in item.get('authorships', [])[:2]),
+                    'doi': n_doi,
+                })
+                edges.append({'source': oa_center_id, 'target': nid})
+        except (requests.RequestException, ValueError):
+            pass  # partial graph is still useful
+
+    # Citations (papers that cite this paper) — use cited_by_api_url
+    cited_by_url = data.get('cited_by_api_url', '')
+    if cited_by_url:
+        try:
+            cr = requests.get(
+                cited_by_url,
+                params={
+                    'select': 'id,doi,title,authorships,publication_date,cited_by_count',
+                    'per_page': max_citations,
+                    'mailto': 'metaresearch@example.com',
+                },
+                timeout=15
+            )
+            cr.raise_for_status()
+            for item in cr.json().get('results', []):
+                nid = item.get('id', '')
+                if nid in seen_ids:
+                    continue
+                seen_ids.add(nid)
+                n_doi = (item.get('doi') or '').replace('https://doi.org/', '')
+                n_year_str = (item.get('publication_date') or '')[:4]
+                nodes.append({
+                    'id': nid, 'label': item.get('title', 'Untitled'),
+                    'year': int(n_year_str) if n_year_str.isdigit() else None,
+                    'citations': item.get('cited_by_count', 0), 'type': 'citation',
+                    'authors': ', '.join(a.get('author', {}).get('display_name', '') for a in item.get('authorships', [])[:2]),
+                    'doi': n_doi,
+                })
+                edges.append({'source': nid, 'target': oa_center_id})
+        except (requests.RequestException, ValueError):
+            pass
+
+    return {'center': center, 'nodes': nodes, 'edges': edges, 'source': 'openalex', 'error': None}
 
 
 def search_papers(query: str, source: str = 'all', max_results: int = 10) -> list[dict]:
