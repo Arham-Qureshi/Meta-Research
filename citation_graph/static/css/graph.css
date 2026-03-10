@@ -1,0 +1,602 @@
+/* ═══════════════════════════════════════════════════════════════
+   graph.css  –  Citation Network Graph (Cytoscape.js)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Graph Tab Toggle ────────────────────────────────────────── */
+.paper-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 1.5rem;
+}
+
+.paper-tab {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #777;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.paper-tab:hover {
+    color: #aaa;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.paper-tab.active {
+    color: #a5b4fc;
+    border-bottom-color: #818cf8;
+}
+
+.paper-tab-icon {
+    font-size: 0.9rem;
+}
+
+/* ── Tab Content ─────────────────────────────────────────────── */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ── Graph Container ─────────────────────────────────────────── */
+.graph-section {
+    position: relative;
+}
+
+.graph-container {
+    width: 100%;
+    height: 480px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    position: relative;
+}
+
+.graph-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* ── Graph Toolbar ───────────────────────────────────────────── */
+.graph-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    margin-bottom: 0.6rem;
+}
+
+.graph-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.graph-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.graph-control-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: #888;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.graph-control-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.graph-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.graph-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    color: #777;
+}
+
+.graph-stat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.graph-stat-dot.dot-center {
+    background: #818cf8;
+    box-shadow: 0 0 6px rgba(129, 140, 248, 0.5);
+}
+
+.graph-stat-dot.dot-citation {
+    background: #34d399;
+}
+
+.graph-stat-dot.dot-reference {
+    background: #f472b6;
+}
+
+/* ── Node Tooltip ────────────────────────────────────────────── */
+.graph-tooltip {
+    position: absolute;
+    z-index: 100;
+    background: rgba(15, 15, 25, 0.95);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    max-width: 300px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    backdrop-filter: blur(12px);
+}
+
+.graph-tooltip.visible {
+    opacity: 1;
+}
+
+.graph-tooltip-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #e0e0e8;
+    margin-bottom: 0.3rem;
+    line-height: 1.35;
+}
+
+.graph-tooltip-authors {
+    font-size: 0.72rem;
+    color: #888;
+    margin-bottom: 0.25rem;
+}
+
+.graph-tooltip-meta {
+    display: flex;
+    gap: 0.6rem;
+    font-size: 0.68rem;
+    color: #666;
+}
+
+.graph-tooltip-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+/* ── Loading State ───────────────────────────────────────────── */
+.graph-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 0.8rem;
+    color: #888;
+}
+
+.graph-loading .loader-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid rgba(99, 102, 241, 0.15);
+    border-top-color: #818cf8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.graph-loading-text {
+    font-size: 0.82rem;
+}
+
+/* ── Error/Empty State ───────────────────────────────────────── */
+.graph-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 0.6rem;
+    text-align: center;
+    padding: 2rem;
+}
+
+.graph-empty-icon {
+    font-size: 2rem;
+}
+
+.graph-empty h4 {
+    font-size: 0.95rem;
+    color: #aaa;
+    margin: 0;
+}
+
+.graph-empty p {
+    font-size: 0.78rem;
+    color: #666;
+    max-width: 280px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .graph-container {
+        height: 350px;
+    }
+
+    .graph-toolbar {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Citation Graph Standalone Page (cg- prefix)
+   ═══════════════════════════════════════════════════════════════ */
+.cg-page {
+    padding: 2rem 1.5rem 3rem;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.cg-page-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 0.3rem;
+}
+
+.cg-page-subtitle {
+    text-align: center;
+    color: #777;
+    font-size: 0.88rem;
+    margin-bottom: 1.5rem;
+}
+
+.cg-search-area {
+    max-width: 640px;
+    margin: 0 auto 1.5rem;
+    position: relative;
+}
+
+.cg-search-box {
+    margin-bottom: 0;
+}
+
+/* Source Toggle */
+.cg-source-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 3px;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cg-source-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: #777;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.cg-source-btn:hover {
+    color: #aaa;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.cg-source-btn.active {
+    background: rgba(99, 102, 241, 0.12);
+    color: #a5b4fc;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+.cg-source-icon {
+    font-size: 0.9rem;
+}
+
+/* Paper Results Dropdown */
+.cg-paper-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: rgba(15, 15, 25, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    max-height: 380px;
+    overflow-y: auto;
+    display: none;
+    backdrop-filter: blur(16px);
+}
+
+.cg-paper-results.active {
+    display: block;
+}
+
+.cg-paper-result {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.15s ease;
+}
+
+.cg-paper-result:hover {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.cg-paper-result:last-child {
+    border-bottom: none;
+}
+
+.cg-paper-result-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #e0e0e8;
+    margin-bottom: 0.2rem;
+    line-height: 1.3;
+}
+
+.cg-paper-result-meta {
+    font-size: 0.72rem;
+    color: #777;
+    display: flex;
+    gap: 0.8rem;
+}
+
+/* 3-Panel Workspace */
+.cg-workspace {
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    gap: 1rem;
+    min-height: 560px;
+}
+
+.cg-left-panel,
+.cg-right-panel {
+    background: rgba(15, 15, 25, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 1rem;
+    overflow-y: auto;
+    max-height: 620px;
+}
+
+.cg-panel-heading {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cg-panel-body {
+    font-size: 0.82rem;
+    color: #c0c0d0;
+    line-height: 1.55;
+}
+
+.cg-panel-empty {
+    color: #555;
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 2rem 0.5rem;
+}
+
+/* Detail Fields */
+.cg-detail-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #e8e8f0;
+    margin-bottom: 0.5rem;
+    line-height: 1.35;
+}
+
+.cg-detail-authors {
+    font-size: 0.78rem;
+    color: #999;
+    margin-bottom: 0.6rem;
+}
+
+.cg-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: #777;
+    margin-bottom: 0.35rem;
+}
+
+.cg-detail-row span:first-child {
+    flex-shrink: 0;
+}
+
+.cg-detail-abstract {
+    font-size: 0.78rem;
+    color: #888;
+    line-height: 1.55;
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cg-detail-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.75rem;
+    font-size: 0.78rem;
+    color: #818cf8;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.cg-detail-link:hover {
+    color: #a5b4fc;
+}
+
+.cg-detail-type {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    margin-bottom: 0.5rem;
+}
+
+.cg-type-center {
+    background: rgba(129, 140, 248, 0.15);
+    color: #a5b4fc;
+}
+
+.cg-type-citation {
+    background: rgba(52, 211, 153, 0.12);
+    color: #34d399;
+}
+
+.cg-type-reference {
+    background: rgba(244, 114, 182, 0.12);
+    color: #f472b6;
+}
+
+/* Center Graph */
+.cg-center {
+    display: flex;
+    flex-direction: column;
+}
+
+.cg-graph-container {
+    flex: 1;
+    min-height: 480px;
+}
+
+/* Legends */
+.cg-legends {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    gap: 1rem;
+}
+
+.cg-legend-type {
+    display: flex;
+    gap: 0.8rem;
+}
+
+.cg-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    color: #777;
+}
+
+.cg-year-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.cg-year-label {
+    font-size: 0.68rem;
+    color: #777;
+    font-weight: 600;
+}
+
+.cg-year-gradient {
+    width: 120px;
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, hsl(145, 50%, 70%), hsl(145, 70%, 35%));
+}
+
+.cg-source-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #666;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+}
+
+.cg-fallback-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #fbbf24;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 4px;
+    background: rgba(251, 191, 36, 0.08);
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .cg-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .cg-left-panel,
+    .cg-right-panel {
+        max-height: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .cg-page {
+        padding: 1rem;
+    }
+
+    .cg-page-title {
+        font-size: 1.4rem;
+    }
+}

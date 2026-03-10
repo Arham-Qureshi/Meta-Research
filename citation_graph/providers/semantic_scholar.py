@@ -1,0 +1,203 @@
+"""
+Semantic Scholar citation graph provider.
+
+Fetches paper metadata, citations, and references from the Semantic Scholar
+Graph API and returns a normalised graph dict.
+"""
+
+import re
+import time
+import requests
+
+# ── Constants ────────────────────────────────────────────────────
+API_BASE = "https://api.semanticscholar.org/graph/v1/paper"
+_MIN_INTERVAL = 1.5          # seconds between requests (free-tier safe)
+_last_request_ts: float = 0  # module-level rate-limit tracker
+
+
+# ── Rate Limiter ─────────────────────────────────────────────────
+def _rate_limit() -> None:
+    """Block until at least *_MIN_INTERVAL* seconds have passed since last call."""
+    global _last_request_ts
+    wait = _MIN_INTERVAL - (time.time() - _last_request_ts)
+    if wait > 0:
+        time.sleep(wait)
+    _last_request_ts = time.time()
+
+
+# ── ID Resolution ────────────────────────────────────────────────
+def resolve_id(paper_id: str) -> str:
+    """
+    Normalise a paper identifier for the S.S. API.
+
+    Accepted formats:
+        - 40-char hex  (S.S. native)
+        - DOI          (10.xxxx/…)
+        - ArXiv        (2301.12345 or arXiv:2301.12345)
+        - OpenAlex URL (https://openalex.org/W…) — unsupported, returned as-is
+    """
+    pid = paper_id.strip()
+
+    # Already an S.S. 40-hex ID
+    if len(pid) == 40 and all(c in "0123456789abcdef" for c in pid.lower()):
+        return pid
+
+    # DOI
+    if pid.startswith("10.") or pid.startswith("doi:"):
+        return f"DOI:{pid.removeprefix('doi:')}"
+
+    # ArXiv
+    m = re.match(r"^(?:arXiv:)?(\d{4}\.\d{4,5}(?:v\d+)?)$", pid)
+    if m:
+        return f"ArXiv:{m.group(1)}"
+
+    return pid  # fallback: pass through
+
+
+# ── Helpers ──────────────────────────────────────────────────────
+def _extract_doi(ext_ids: dict | None) -> str:
+    if not ext_ids:
+        return ""
+    return ext_ids.get("DOI", "") or ""
+
+
+def _authors_str(authors: list[dict], limit: int = 3) -> str:
+    return ", ".join(a.get("name", "") for a in (authors or [])[:limit])
+
+
+# ── Public API ───────────────────────────────────────────────────
+def fetch_graph(paper_id: str, max_citations: int = 20,
+                max_references: int = 20) -> dict:
+    """
+    Build a citation graph dict from Semantic Scholar.
+
+    Returns
+    -------
+    dict  with keys: center, nodes, edges, source, error
+    """
+    resolved = resolve_id(paper_id)
+    fields = (
+        "title,authors,year,citationCount,externalIds,"
+        "citations.title,citations.authors,citations.year,"
+        "citations.citationCount,citations.externalIds,"
+        "references.title,references.authors,references.year,"
+        "references.citationCount,references.externalIds"
+    )
+
+    _rate_limit()
+    try:
+        resp = requests.get(
+            f"{API_BASE}/{resolved}",
+            params={"fields": fields, "limit": max(max_citations, max_references)},
+            headers={"User-Agent": "MetaResearch/1.0"},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as exc:
+        return {
+            "center": _fetch_basic_info(resolved),
+            "nodes": [], "edges": [],
+            "source": "semantic_scholar",
+            "error": f"Semantic Scholar API error: {exc}",
+        }
+    except ValueError:
+        return _error_response("Invalid JSON from Semantic Scholar")
+
+    return _build_graph(data, paper_id, max_citations, max_references)
+
+
+def _fetch_basic_info(resolved_id: str) -> dict | None:
+    """Lightweight call for center-paper metadata (works even under rate limit)."""
+    _rate_limit()
+    try:
+        resp = requests.get(
+            f"{API_BASE}/{resolved_id}",
+            params={"fields": "title,externalIds,year,citationCount,authors"},
+            headers={"User-Agent": "MetaResearch/1.0"},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            d = resp.json()
+            return {
+                "id": d.get("paperId", ""),
+                "title": d.get("title", "Unknown"),
+                "authors": _authors_str(d.get("authors", [])),
+                "year": d.get("year"),
+                "citationCount": d.get("citationCount", 0),
+                "doi": _extract_doi(d.get("externalIds")),
+            }
+    except Exception:
+        pass
+    return None
+
+
+# ── Graph Builder ────────────────────────────────────────────────
+def _build_graph(data: dict, paper_id: str,
+                 max_citations: int, max_references: int) -> dict:
+    center_id = data.get("paperId", paper_id)
+    center_doi = _extract_doi(data.get("externalIds"))
+    center = {
+        "id": center_id,
+        "title": data.get("title", "Unknown"),
+        "authors": _authors_str(data.get("authors", [])),
+        "year": data.get("year"),
+        "citationCount": data.get("citationCount", 0),
+        "doi": center_doi,
+    }
+
+    nodes = [{
+        "id": center_id,
+        "label": center["title"],
+        "year": center["year"],
+        "citations": center["citationCount"],
+        "type": "center",
+        "authors": center["authors"],
+        "doi": center_doi,
+    }]
+    edges = []
+    seen = {center_id}
+
+    # Citations (papers that cite this one)
+    for c in (data.get("citations") or [])[:max_citations]:
+        cid = c.get("paperId")
+        if not cid or cid in seen:
+            continue
+        seen.add(cid)
+        nodes.append({
+            "id": cid,
+            "label": c.get("title", "Untitled"),
+            "year": c.get("year"),
+            "citations": c.get("citationCount", 0),
+            "type": "citation",
+            "authors": _authors_str(c.get("authors", []), 2),
+            "doi": _extract_doi(c.get("externalIds")),
+        })
+        edges.append({"source": cid, "target": center_id})
+
+    # References (papers this one cites)
+    for r in (data.get("references") or [])[:max_references]:
+        rid = r.get("paperId")
+        if not rid or rid in seen:
+            continue
+        seen.add(rid)
+        nodes.append({
+            "id": rid,
+            "label": r.get("title", "Untitled"),
+            "year": r.get("year"),
+            "citations": r.get("citationCount", 0),
+            "type": "reference",
+            "authors": _authors_str(r.get("authors", []), 2),
+            "doi": _extract_doi(r.get("externalIds")),
+        })
+        edges.append({"source": center_id, "target": rid})
+
+    return {
+        "center": center, "nodes": nodes, "edges": edges,
+        "source": "semantic_scholar", "error": None,
+    }
+
+
+def _error_response(msg: str) -> dict:
+    return {"center": None, "nodes": [], "edges": [],
+            "source": "semantic_scholar", "error": msg}
