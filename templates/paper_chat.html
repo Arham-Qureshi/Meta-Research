@@ -3,13 +3,13 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/graph.css') }}">
+<link rel="stylesheet" href="{{ url_for('citation_graph.static', filename='css/graph.css') }}">
 {% endblock %}
 
 {% block content %}
 <section class="chat-page" id="chatPage">
     <!-- Back link -->
-    <a href="{{ url_for('index') }}" class="chat-back-link">← Back to Search</a>
+    <a href="{{ url_for('pages.index') }}" class="chat-back-link">← Back to Search</a>
 
     <div class="chat-layout">
         <!-- ===== Left Panel: Paper Info + Graph ===== -->
@@ -148,5 +148,5 @@
 <script src="{{ url_for('static', filename='js/paper_loader.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
-<script src="{{ url_for('static', filename='js/citation_graph.js') }}"></script>
+<script src="{{ url_for('citation_graph.static', filename='js/citation_graph.js') }}"></script>
 {% endblock %}
