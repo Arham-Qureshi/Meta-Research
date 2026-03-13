@@ -99,11 +99,9 @@
             fetch('/api/search?q=' + encodeURIComponent(q) + '&source=' + source + '&max=15')
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    var papers = (data.papers || []).filter(function (p) {
-                        return Number(p.citations || 0) >= 10;
-                    });
+                    var papers = data.papers || [];
                     if (papers.length === 0) {
-                        dropdown.innerHTML = '<div class="cg-paper-result" style="color:#888;text-align:center;">No papers with 10+ citations found. Try a broader search.</div>';
+                        dropdown.innerHTML = '<div class="cg-paper-result" style="color:#888;text-align:center;">No papers found or rate-limited. Try a broader search or wait.</div>';
                         return;
                     }
                     dropdown.innerHTML = papers.map(function (p) {
