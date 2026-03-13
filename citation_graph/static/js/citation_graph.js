@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
    citation_graph.js — Cytoscape.js Citation Network Visualiser
    Supports: Standalone (/citation-graph) & Embedded (paper_chat tab)
-   Layout:  Concentric rings — instant render, zero physics jitter
+   Layout:  Force-directed (cose) — organic, connected-papers style
+   Colors:  Purple=center, Green=citation, Pink=reference
    ═══════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -10,22 +11,17 @@
     /* ── State ────────────────────────────────────────────────── */
     var cy = null;
     var tooltipEl = null;
-    var _yearRange = { min: 2000, max: 2025 };
+    var _cinemaMode = false;
 
-    /* ── Year → Color Mapping ────────────────────────────────── */
-    function yearToColor(year) {
-        if (!year) return 'hsl(145, 50%, 52%)';
-        var span = _yearRange.max - _yearRange.min;
-        var t = span > 0 ? (year - _yearRange.min) / span : 0.5;
-        t = Math.max(0, Math.min(1, t));
-        return 'hsl(145, ' + (50 + t * 20) + '%, ' + (70 - t * 35) + '%)';
-    }
+    /* ── Type → Color Mapping ────────────────────────────────── */
+    var TYPE_COLORS = {
+        center:    '#b28cfa',   /* purple  */
+        citation:  '#4ade80',   /* green   */
+        reference: '#f472b6'    /* pink    */
+    };
 
-    function computeYearRange(nodes) {
-        var years = nodes.map(function (n) { return n.year; }).filter(Boolean);
-        if (years.length === 0) return;
-        _yearRange.min = Math.min.apply(null, years);
-        _yearRange.max = Math.max.apply(null, years);
+    function typeToColor(type) {
+        return TYPE_COLORS[type] || TYPE_COLORS.citation;
     }
 
     function logSize(citations) {
@@ -46,9 +42,9 @@
     }
 
     function typeEmoji(type) {
-        if (type === 'center') return '🎯 This Paper';
+        if (type === 'center') return '🟣 This Paper';
         if (type === 'citation') return '🟢 Cites This';
-        if (type === 'reference') return '🔴 Referenced';
+        if (type === 'reference') return '🩷 Referenced';
         return '';
     }
 
@@ -195,7 +191,6 @@
                 if (data.center) populateLeftPanel(data.center, 'graph');
                 renderGraph(container, data, true);
                 updateStats(data, true);
-                buildYearLegend(data.nodes);
             })
             .catch(function (err) {
                 if (loadingEl) loadingEl.style.display = 'none';
@@ -257,40 +252,18 @@
         if (el) el.innerHTML = '<p class="cg-panel-empty">Hover over a node to see details.</p>';
     }
 
-    /* ════════════════════════════════════════════════════════════
-       YEAR LEGEND
-       ════════════════════════════════════════════════════════════ */
-    function buildYearLegend(nodes) {
-        computeYearRange(nodes);
-        var minEl = document.getElementById('cgYearMin');
-        var maxEl = document.getElementById('cgYearMax');
-        var gradEl = document.getElementById('cgYearGradient');
-        if (minEl) minEl.textContent = _yearRange.min;
-        if (maxEl) maxEl.textContent = _yearRange.max;
-        if (gradEl) {
-            gradEl.style.background = 'linear-gradient(90deg, '
-                + yearToColor(_yearRange.min) + ', '
-                + yearToColor(_yearRange.max) + ')';
-        }
-    }
+    /* Year legend removed — nodes are now colored by type */
 
     /* ════════════════════════════════════════════════════════════
        RENDER CYTOSCAPE GRAPH
-       Layout: concentric rings — instant, zero-physics
-       Center ring = target paper
-       Ring 1 = citations (papers that cite it)
-       Ring 2 = references (papers it cites)
+       Layout: force-directed (cose) — organic, connected-papers style
+       Colors: purple=center, green=citation, pink=reference
        ════════════════════════════════════════════════════════════ */
     function renderGraph(container, data, isStandalone) {
-        computeYearRange(data.nodes);
-
         var elements = [];
 
         data.nodes.forEach(function (n) {
-            var size = n.type === 'center' ? 55 : logSize(n.citations);
-
-            /* Concentric level: center=3 (innermost), citation=2, reference=1 */
-            var level = n.type === 'center' ? 3 : (n.type === 'citation' ? 2 : 1);
+            var size = n.type === 'center' ? 60 : logSize(n.citations);
 
             elements.push({
                 group: 'nodes',
@@ -304,16 +277,25 @@
                     authors: n.authors || '',
                     doi: n.doi || '',
                     size: size,
-                    color: n.type === 'center' ? '#818cf8' : yearToColor(n.year),
-                    level: level
+                    color: typeToColor(n.type)
                 }
             });
         });
 
         data.edges.forEach(function (e) {
+            /* Determine edge type from the node types:
+               citation nodes point TO center → edgeType = 'citation'
+               center points TO reference nodes → edgeType = 'reference' */
+            var srcNode = data.nodes.find(function (n) { return n.id === e.source; });
+            var edgeType = (srcNode && srcNode.type === 'center') ? 'reference' : 'citation';
             elements.push({
                 group: 'edges',
-                data: { id: e.source + '->' + e.target, source: e.source, target: e.target }
+                data: {
+                    id: e.source + '->' + e.target,
+                    source: e.source,
+                    target: e.target,
+                    edgeType: edgeType
+                }
             });
         });
 
@@ -339,38 +321,64 @@
                 {
                     selector: 'node[type="center"]',
                     style: {
-                        'border-width': 3, 'border-color': 'rgba(129,140,248,0.4)',
+                        'border-width': 3, 'border-color': 'rgba(178,140,250,0.5)',
                         'font-size': '9px', 'font-weight': 700, 'color': '#e8e8f0',
-                        'text-max-width': '140px'
+                        'text-max-width': '140px',
+                        'shadow-blur': 15,
+                        'shadow-color': 'rgba(178,140,250,0.35)',
+                        'shadow-opacity': 1
                     }
                 },
                 { selector: 'node:active', style: { 'overlay-opacity': 0.08 } },
                 {
                     selector: 'edge',
                     style: {
-                        'width': 1.2, 'line-color': 'rgba(255,255,255,0.08)',
-                        'target-arrow-color': 'rgba(255,255,255,0.15)',
+                        'width': 1.4, 'line-color': 'rgba(255,255,255,0.10)',
+                        'target-arrow-color': 'rgba(255,255,255,0.18)',
                         'target-arrow-shape': 'triangle',
                         'curve-style': 'bezier', 'arrow-scale': 0.7,
                         'opacity': 0  /* start invisible for fade-in */
                     }
                 },
+                /* Green-tinted edges for citation connections */
+                {
+                    selector: 'edge[edgeType="citation"]',
+                    style: {
+                        'line-color': 'rgba(74, 222, 128, 0.25)',
+                        'target-arrow-color': 'rgba(74, 222, 128, 0.45)'
+                    }
+                },
+                /* Pink-tinted edges for reference connections */
+                {
+                    selector: 'edge[edgeType="reference"]',
+                    style: {
+                        'line-color': 'rgba(244, 114, 182, 0.25)',
+                        'target-arrow-color': 'rgba(244, 114, 182, 0.45)'
+                    }
+                },
                 { selector: 'node:selected', style: { 'border-width': 3, 'border-color': '#fbbf24' } },
-                { selector: '.faded', style: { 'opacity': 0.15 } },
+                { selector: '.faded', style: { 'opacity': 0.12 } },
                 { selector: '.highlighted', style: { 'opacity': 1 } }
             ],
 
-            /* ── Concentric layout — instant, no physics ────── */
+            /* ── Force-directed cose layout — organic, connected-papers look */
             layout: {
-                name: 'concentric',
-                concentric: function (node) { return node.data('level'); },
-                levelWidth: function () { return 1; },
-                animate: false,
-                minNodeSpacing: 40,
-                padding: 40
+                name: 'cose',
+                animate: 'end',
+                animationDuration: 800,
+                animationEasing: 'ease-out-cubic',
+                nodeRepulsion: function () { return 8000; },
+                idealEdgeLength: function () { return 120; },
+                edgeElasticity: function () { return 100; },
+                gravity: 0.25,
+                numIter: 300,
+                padding: 50,
+                nestingFactor: 1.2,
+                randomize: false,
+                componentSpacing: 80
             },
 
-            minZoom: 0.25, maxZoom: 3, wheelSensitivity: 0.3
+            minZoom: 0.2, maxZoom: 3, wheelSensitivity: 0.3
         });
 
         /* ── Smooth fade-in after layout ─────────────────────── */
@@ -454,21 +462,48 @@
         var zoomOut = document.getElementById(pfx + 'ZoomOut') || document.getElementById('graphZoomOut');
         var fit = document.getElementById(pfx + 'Fit') || document.getElementById('graphFit');
         var relayout = document.getElementById(pfx + 'Relayout') || document.getElementById('graphRelayout');
+        var cinemaBtn = document.getElementById('cgCinemaBtn');
 
         if (zoomIn) zoomIn.onclick = function () { if (cy) cy.zoom(cy.zoom() * 1.3); };
         if (zoomOut) zoomOut.onclick = function () { if (cy) cy.zoom(cy.zoom() * 0.7); };
         if (fit) fit.onclick = function () { if (cy) cy.fit(null, 30); };
 
-        /* Re-layout: use cose (physics) on-demand — user explicitly asked */
+        /* Re-layout  */
         if (relayout) relayout.onclick = function () {
             if (!cy) return;
             cy.layout({
                 name: 'cose',
                 animate: true, animationDuration: 600,
-                nodeRepulsion: function () { return 6000; },
-                idealEdgeLength: function () { return 100; },
-                gravity: 0.3, numIter: 200, padding: 30
+                nodeRepulsion: function () { return 8000; },
+                idealEdgeLength: function () { return 120; },
+                gravity: 0.25, numIter: 300, padding: 50
             }).run();
+        };
+
+        /* Cinema Mode toggle */
+        if (cinemaBtn) cinemaBtn.onclick = function () {
+            var workspace = document.getElementById('cgWorkspace');
+            if (!workspace) return;
+            _cinemaMode = !_cinemaMode;
+            workspace.classList.toggle('cinema-mode', _cinemaMode);
+            cinemaBtn.classList.toggle('active', _cinemaMode);
+            cinemaBtn.title = _cinemaMode ? 'Exit cinema mode' : 'Cinema mode';
+
+            /* Continuously resize during the 400ms CSS transition
+               so the canvas tracks the grid shrinking/expanding.
+               This prevents the right sidebar overflow bug. */
+            var resizeCount = 0;
+            var resizeInterval = setInterval(function () {
+                if (cy) cy.resize();
+                resizeCount++;
+                if (resizeCount >= 20) {  /* 20 × 25ms = 500ms */
+                    clearInterval(resizeInterval);
+                    if (cy) {
+                        cy.resize();
+                        cy.fit(null, 30);
+                    }
+                }
+            }, 25);
         };
     }
 
@@ -484,8 +519,8 @@
         var pfx = isStandalone ? 'cg' : '';
         var citEl = document.getElementById(pfx + 'CitationCount') || document.getElementById('citationCount');
         var refEl = document.getElementById(pfx + 'ReferenceCount') || document.getElementById('referenceCount');
-        if (citEl) citEl.textContent = citCount + ' citations';
-        if (refEl) refEl.textContent = refCount + ' references';
+        if (citEl) citEl.textContent = citCount + ' citing papers shown';
+        if (refEl) refEl.textContent = refCount + ' referenced papers shown';
     }
 
     /* ════════════════════════════════════════════════════════════

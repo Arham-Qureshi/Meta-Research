@@ -132,8 +132,8 @@
 }
 
 .graph-stat-dot.dot-center {
-    background: #818cf8;
-    box-shadow: 0 0 6px rgba(129, 140, 248, 0.5);
+    background: #b28cfa;
+    box-shadow: 0 0 6px rgba(178, 140, 250, 0.5);
 }
 
 .graph-stat-dot.dot-citation {
@@ -392,6 +392,35 @@
     grid-template-columns: 260px 1fr 280px;
     gap: 1rem;
     min-height: 560px;
+    transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Cinema Mode ───────────────────────────────────── */
+.cg-workspace.cinema-mode {
+    grid-template-columns: 0px 1fr 0px;
+    gap: 0;
+    max-width: calc(100% - 2rem);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cg-workspace.cinema-mode .cg-left-panel,
+.cg-workspace.cinema-mode .cg-right-panel {
+    opacity: 0;
+    overflow: hidden;
+    padding: 0;
+    border-color: transparent;
+    pointer-events: none;
+    width: 0;
+    min-width: 0;
+}
+
+.cg-workspace.cinema-mode .cg-graph-container {
+    min-height: 75vh;
+}
+
+.cg-workspace.cinema-mode .cg-center {
+    border-radius: 12px;
 }
 
 .cg-left-panel,
@@ -402,6 +431,7 @@
     padding: 1rem;
     overflow-y: auto;
     max-height: 620px;
+    transition: opacity 0.35s ease, padding 0.35s ease, border-color 0.35s ease;
 }
 
 .cg-panel-heading {
@@ -492,8 +522,8 @@
 }
 
 .cg-type-center {
-    background: rgba(129, 140, 248, 0.15);
-    color: #a5b4fc;
+    background: rgba(178, 140, 250, 0.15);
+    color: #b28cfa;
 }
 
 .cg-type-citation {
@@ -510,11 +540,14 @@
 .cg-center {
     display: flex;
     flex-direction: column;
+    min-width: 0;        /* CRITICAL: allows grid item to shrink below content size */
+    overflow: hidden;    /* prevents canvas from pushing grid wider */
 }
 
 .cg-graph-container {
     flex: 1;
     min-height: 480px;
+    transition: min-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Legends */
@@ -556,6 +589,21 @@
     height: 10px;
     border-radius: 5px;
     background: linear-gradient(90deg, hsl(145, 50%, 70%), hsl(145, 70%, 35%));
+}
+
+/* ── Cinema Button ───────────────────────────────────── */
+.cg-cinema-btn {
+    position: relative;
+}
+
+.cg-cinema-btn.active {
+    background: rgba(178, 140, 250, 0.15);
+    color: #b28cfa;
+    border-color: rgba(178, 140, 250, 0.3);
+}
+
+.cg-cinema-btn svg {
+    display: block;
 }
 
 .cg-source-badge {
