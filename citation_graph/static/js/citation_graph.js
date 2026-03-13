@@ -265,11 +265,15 @@
         data.nodes.forEach(function (n) {
             var size = n.type === 'center' ? 60 : logSize(n.citations);
 
+            /* Label as 'Author, Year' like Connected Papers */
+            var firstAuthor = (n.authors || 'Unknown').split(',')[0].trim();
+            var nodeLabel = firstAuthor + (n.year ? ', ' + n.year : '');
+
             elements.push({
                 group: 'nodes',
                 data: {
                     id: n.id,
-                    label: truncate(n.label, 30),
+                    label: nodeLabel,
                     fullLabel: n.label,
                     type: n.type,
                     year: n.year,
