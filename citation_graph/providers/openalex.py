@@ -13,6 +13,13 @@ import requests
 API_BASE = "https://api.openalex.org/works"
 _MAILTO = "metaresearch@example.com"
 
+# ── Fields requested for all nodes (abstracts + concepts) ────────
+_NODE_FIELDS = "id,doi,title,authorships,publication_date,cited_by_count,abstract_inverted_index,concepts"
+_CENTER_FIELDS = (
+    "id,doi,title,authorships,publication_date,cited_by_count,"
+    "referenced_works,cited_by_api_url,abstract_inverted_index,concepts,related_works"
+)
+
 
 # ── ID Resolution ────────────────────────────────────────────────
 def resolve_id(paper_id: str) -> str:
@@ -91,6 +98,29 @@ def _reconstruct_abstract(inverted_index: dict | None) -> str:
     return " ".join(w for _, w in positions)
 
 
+def _extract_concepts(concepts: list[dict] | None, limit: int = 5) -> list[str]:
+    """Extract top concept display names from OpenAlex concept objects."""
+    if not concepts:
+        return []
+    sorted_c = sorted(concepts, key=lambda c: c.get("score", 0), reverse=True)
+    return [c.get("display_name", "") for c in sorted_c[:limit] if c.get("display_name")]
+
+
+def _make_node(item: dict, node_type: str) -> dict:
+    """Build a standardised node dict from a raw OpenAlex work object."""
+    return {
+        "id": item.get("id", ""),
+        "label": item.get("title", "Untitled"),
+        "year": _year_from_date(item.get("publication_date")),
+        "citations": item.get("cited_by_count", 0),
+        "type": node_type,
+        "authors": _authors_str(item.get("authorships", []), 2),
+        "doi": _clean_doi(item.get("doi")),
+        "summary": _reconstruct_abstract(item.get("abstract_inverted_index")),
+        "concepts": _extract_concepts(item.get("concepts")),
+    }
+
+
 # ── Batch Fetcher (reusable) ────────────────────────────────────
 def _fetch_batch(ids: list[str], max_items: int,
                  node_type: str) -> list[tuple[dict, dict]]:
@@ -109,7 +139,7 @@ def _fetch_batch(ids: list[str], max_items: int,
             API_BASE,
             params={
                 "filter": f"openalex:{oa_filter}",
-                "select": "id,doi,title,authorships,publication_date,cited_by_count",
+                "select": _NODE_FIELDS,
                 "per_page": max_items,
                 "mailto": _MAILTO,
             },
@@ -122,16 +152,8 @@ def _fetch_batch(ids: list[str], max_items: int,
 
     results = []
     for item in items:
-        nid = item.get("id", "")
-        results.append(({
-            "id": nid,
-            "label": item.get("title", "Untitled"),
-            "year": _year_from_date(item.get("publication_date")),
-            "citations": item.get("cited_by_count", 0),
-            "type": node_type,
-            "authors": _authors_str(item.get("authorships", []), 2),
-            "doi": _clean_doi(item.get("doi")),
-        }, {"peer_id": nid}))
+        node = _make_node(item, node_type)
+        results.append((node, {"peer_id": node["id"]}))
     return results
 
 
@@ -143,7 +165,7 @@ def _fetch_citing(cited_by_url: str, max_items: int) -> list[tuple[dict, dict]]:
         resp = requests.get(
             cited_by_url,
             params={
-                "select": "id,doi,title,authorships,publication_date,cited_by_count",
+                "select": _NODE_FIELDS,
                 "per_page": max_items,
                 "mailto": _MAILTO,
             },
@@ -156,17 +178,16 @@ def _fetch_citing(cited_by_url: str, max_items: int) -> list[tuple[dict, dict]]:
 
     results = []
     for item in items:
-        nid = item.get("id", "")
-        results.append(({
-            "id": nid,
-            "label": item.get("title", "Untitled"),
-            "year": _year_from_date(item.get("publication_date")),
-            "citations": item.get("cited_by_count", 0),
-            "type": "citation",
-            "authors": _authors_str(item.get("authorships", []), 2),
-            "doi": _clean_doi(item.get("doi")),
-        }, {"peer_id": nid}))
+        node = _make_node(item, "citation")
+        results.append((node, {"peer_id": node["id"]}))
     return results
+
+
+def _fetch_related(related_ids: list[str], max_items: int) -> list[tuple[dict, dict]]:
+    """Fetch related works by their OpenAlex IDs."""
+    if not related_ids:
+        return []
+    return _fetch_batch(related_ids, max_items, "related")
 
 
 # ── Public API ───────────────────────────────────────────────────
@@ -177,7 +198,8 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
     """
     Build a citation graph dict from OpenAlex.
 
-    Uses ThreadPoolExecutor to fetch references and citations in parallel.
+    Uses ThreadPoolExecutor to fetch references, citations, and related
+    works in parallel.
     """
     oa_id = resolve_id(paper_id)
 
@@ -194,12 +216,10 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
             )
 
     # ── Fetch center paper ───────────────────────────────────────
-    fields = ("id,doi,title,authorships,publication_date,cited_by_count,"
-              "referenced_works,cited_by_api_url,abstract_inverted_index")
     try:
         resp = requests.get(
             f"{API_BASE}/{oa_id}",
-            params={"select": fields, "mailto": _MAILTO},
+            params={"select": _CENTER_FIELDS, "mailto": _MAILTO},
             timeout=15,
         )
         resp.raise_for_status()
@@ -219,24 +239,29 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
         "citationCount": data.get("cited_by_count", 0),
         "doi": doi,
         "summary": _reconstruct_abstract(data.get("abstract_inverted_index")),
+        "concepts": _extract_concepts(data.get("concepts")),
     }
 
     nodes = [{
         "id": center_id, "label": center["title"], "year": year,
         "citations": center["citationCount"], "type": "center",
         "authors": center["authors"], "doi": doi,
+        "summary": center["summary"],
+        "concepts": center["concepts"],
     }]
     edges = []
     seen = {center_id}
 
-    # ── Parallel fetch: references + citations ───────────────────
+    # ── Parallel fetch: references + citations + related ─────────
     ref_ids = data.get("referenced_works", [])[:max_references]
     cited_by_url = data.get("cited_by_api_url", "")
+    related_ids = data.get("related_works", [])[:10]
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
+    with ThreadPoolExecutor(max_workers=3) as pool:
         futures = {
             pool.submit(_fetch_batch, ref_ids, max_references, "reference"): "ref",
             pool.submit(_fetch_citing, cited_by_url, max_citations): "cite",
+            pool.submit(_fetch_related, related_ids, 10): "related",
         }
         for future in as_completed(futures):
             kind = futures[future]
@@ -252,8 +277,10 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
                 nodes.append(node)
                 if kind == "ref":
                     edges.append({"source": center_id, "target": nid})
-                else:
+                elif kind == "cite":
                     edges.append({"source": nid, "target": center_id})
+                else:
+                    edges.append({"source": center_id, "target": nid})
 
     return {
         "center": center, "nodes": nodes, "edges": edges,

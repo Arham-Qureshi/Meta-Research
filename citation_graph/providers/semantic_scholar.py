@@ -65,6 +65,28 @@ def _authors_str(authors: list[dict], limit: int = 3) -> str:
     return ", ".join(a.get("name", "") for a in (authors or [])[:limit])
 
 
+def _extract_concepts(fields: list[dict] | None, limit: int = 5) -> list[str]:
+    """Extract field-of-study names from S.S. s2FieldsOfStudy."""
+    if not fields:
+        return []
+    return [f.get("category", "") for f in fields[:limit] if f.get("category")]
+
+
+def _make_node(item: dict, node_type: str) -> dict:
+    """Build a standardised node dict from a raw S.S. paper object."""
+    return {
+        "id": item.get("paperId", ""),
+        "label": item.get("title", "Untitled"),
+        "year": item.get("year"),
+        "citations": item.get("citationCount", 0),
+        "type": node_type,
+        "authors": _authors_str(item.get("authors", []), 2),
+        "doi": _extract_doi(item.get("externalIds")),
+        "summary": item.get("abstract", "") or "",
+        "concepts": _extract_concepts(item.get("s2FieldsOfStudy")),
+    }
+
+
 # ── Public API ───────────────────────────────────────────────────
 def fetch_graph(paper_id: str, max_citations: int = 20,
                 max_references: int = 20) -> dict:
@@ -77,11 +99,11 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
     """
     resolved = resolve_id(paper_id)
     fields = (
-        "title,authors,year,citationCount,externalIds,"
+        "title,authors,year,citationCount,externalIds,abstract,s2FieldsOfStudy,"
         "citations.title,citations.authors,citations.year,"
-        "citations.citationCount,citations.externalIds,"
+        "citations.citationCount,citations.externalIds,citations.abstract,citations.s2FieldsOfStudy,"
         "references.title,references.authors,references.year,"
-        "references.citationCount,references.externalIds"
+        "references.citationCount,references.externalIds,references.abstract,references.s2FieldsOfStudy"
     )
 
     _rate_limit()
@@ -144,6 +166,8 @@ def _build_graph(data: dict, paper_id: str,
         "year": data.get("year"),
         "citationCount": data.get("citationCount", 0),
         "doi": center_doi,
+        "summary": data.get("abstract", "") or "",
+        "concepts": _extract_concepts(data.get("s2FieldsOfStudy")),
     }
 
     nodes = [{
@@ -154,6 +178,8 @@ def _build_graph(data: dict, paper_id: str,
         "type": "center",
         "authors": center["authors"],
         "doi": center_doi,
+        "summary": center["summary"],
+        "concepts": center["concepts"],
     }]
     edges = []
     seen = {center_id}
@@ -164,15 +190,7 @@ def _build_graph(data: dict, paper_id: str,
         if not cid or cid in seen:
             continue
         seen.add(cid)
-        nodes.append({
-            "id": cid,
-            "label": c.get("title", "Untitled"),
-            "year": c.get("year"),
-            "citations": c.get("citationCount", 0),
-            "type": "citation",
-            "authors": _authors_str(c.get("authors", []), 2),
-            "doi": _extract_doi(c.get("externalIds")),
-        })
+        nodes.append(_make_node(c, "citation"))
         edges.append({"source": cid, "target": center_id})
 
     # References (papers this one cites)
@@ -181,15 +199,7 @@ def _build_graph(data: dict, paper_id: str,
         if not rid or rid in seen:
             continue
         seen.add(rid)
-        nodes.append({
-            "id": rid,
-            "label": r.get("title", "Untitled"),
-            "year": r.get("year"),
-            "citations": r.get("citationCount", 0),
-            "type": "reference",
-            "authors": _authors_str(r.get("authors", []), 2),
-            "doi": _extract_doi(r.get("externalIds")),
-        })
+        nodes.append(_make_node(r, "reference"))
         edges.append({"source": center_id, "target": rid})
 
     return {
