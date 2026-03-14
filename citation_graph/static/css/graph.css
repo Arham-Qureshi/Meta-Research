@@ -144,6 +144,10 @@
     background: #f472b6;
 }
 
+.graph-stat-dot.dot-related {
+    background: #60a5fa;
+}
+
 /* ── Node Tooltip ────────────────────────────────────────────── */
 .graph-tooltip {
     position: absolute;
@@ -242,7 +246,7 @@
     max-width: 280px;
 }
 
-/* ── Responsive ──────────────────────────────────────────────── */
+/* ── Responsive (Embedded Graph) ────────────────────────────── */
 @media (max-width: 768px) {
     .graph-container {
         height: 350px;
@@ -286,6 +290,27 @@
 
 .cg-search-box {
     margin-bottom: 0;
+}
+
+/* ── Typing Placeholder Animation ────────────────────── */
+.cg-typing-input {
+    caret-color: #818cf8;
+}
+
+.cg-typing-input::placeholder {
+    color: transparent;
+}
+
+.cg-typing-cursor {
+    display: inline;
+    animation: cg-blink 1s step-end infinite;
+    color: #818cf8;
+    font-weight: 300;
+}
+
+@keyframes cg-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
 }
 
 /* Source Toggle */
@@ -458,7 +483,84 @@
     padding: 2rem 0.5rem;
 }
 
-/* Detail Fields */
+/* ═══════════════════════════════════════════════════════════════
+   Left Panel: Scrollable Papers List
+   ═══════════════════════════════════════════════════════════════ */
+.cg-paper-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cg-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.55rem 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.18s ease, box-shadow 0.18s ease;
+    border-left: 3px solid transparent;
+}
+
+.cg-list-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.cg-list-item.active {
+    background: rgba(99, 102, 241, 0.1);
+    border-left-color: #818cf8;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.08);
+}
+
+.cg-list-item.pinned {
+    border-left-color: #b28cfa;
+    background: rgba(178, 140, 250, 0.06);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.cg-list-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+}
+
+.cg-list-dot.dot-center    { background: #b28cfa; box-shadow: 0 0 4px rgba(178,140,250,0.5); }
+.cg-list-dot.dot-citation  { background: #34d399; }
+.cg-list-dot.dot-reference { background: #f472b6; }
+.cg-list-dot.dot-related   { background: #60a5fa; }
+
+.cg-list-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.cg-list-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #d0d0d8;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.cg-list-meta {
+    font-size: 0.65rem;
+    color: #666;
+    margin-top: 2px;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Right Panel: Detail Fields
+   ═══════════════════════════════════════════════════════════════ */
 .cg-detail-title {
     font-size: 0.92rem;
     font-weight: 700;
@@ -493,6 +595,8 @@
     margin-top: 0.6rem;
     padding-top: 0.6rem;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .cg-detail-link {
@@ -536,12 +640,36 @@
     color: #f472b6;
 }
 
+.cg-type-related {
+    background: rgba(96, 165, 250, 0.12);
+    color: #60a5fa;
+}
+
+/* ── Concept Chips ────────────────────────────────────── */
+.cg-concepts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 0.5rem;
+}
+
+.cg-concept-chip {
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    white-space: nowrap;
+}
+
 /* Center Graph */
 .cg-center {
     display: flex;
     flex-direction: column;
-    min-width: 0;        /* CRITICAL: allows grid item to shrink below content size */
-    overflow: hidden;    /* prevents canvas from pushing grid wider */
+    min-width: 0;
+    overflow: hidden;
 }
 
 .cg-graph-container {
@@ -570,25 +698,6 @@
     gap: 0.3rem;
     font-size: 0.7rem;
     color: #777;
-}
-
-.cg-year-legend {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.cg-year-label {
-    font-size: 0.68rem;
-    color: #777;
-    font-weight: 600;
-}
-
-.cg-year-gradient {
-    width: 120px;
-    height: 10px;
-    border-radius: 5px;
-    background: linear-gradient(90deg, hsl(145, 50%, 70%), hsl(145, 70%, 35%));
 }
 
 /* ── Cinema Button ───────────────────────────────────── */
