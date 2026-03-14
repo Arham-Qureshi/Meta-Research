@@ -29,8 +29,8 @@
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
             </span>
-            <input type="text" id="cgSearchInput" class="search-input"
-                placeholder="Search for a paper to build its citation graph..." autocomplete="off">
+            <input type="text" id="cgSearchInput" class="search-input cg-typing-input"
+                placeholder="" autocomplete="off">
             <button class="search-btn" id="cgSearchBtn">
                 <span class="search-btn-icon">→</span>
             </button>
@@ -42,10 +42,10 @@
     <!-- ── 3-Panel Layout ────────────────────────────────────── -->
     <div class="cg-workspace" id="cgWorkspace" style="display:none;">
 
-        <!-- Left Panel: Origin Paper -->
+        <!-- Left Panel: Papers List -->
         <aside class="cg-left-panel" id="cgLeftPanel">
-            <h3 class="cg-panel-heading">Origin Paper</h3>
-            <div id="cgOriginContent" class="cg-panel-body">
+            <h3 class="cg-panel-heading">Papers in Graph</h3>
+            <div id="cgPaperList" class="cg-paper-list">
                 <p class="cg-panel-empty">Select a paper to begin.</p>
             </div>
         </aside>
@@ -67,6 +67,10 @@
                         <span class="graph-stat">
                             <span class="graph-stat-dot dot-reference"></span>
                             <span id="cgReferenceCount">0 references</span>
+                        </span>
+                        <span class="graph-stat">
+                            <span class="graph-stat-dot dot-related"></span>
+                            <span id="cgRelatedCount">0 related</span>
                         </span>
                     </div>
                 </div>
@@ -114,15 +118,16 @@
                     <span class="cg-legend-item"><span class="graph-stat-dot dot-center"></span> This Paper</span>
                     <span class="cg-legend-item"><span class="graph-stat-dot dot-citation"></span> Cites This</span>
                     <span class="cg-legend-item"><span class="graph-stat-dot dot-reference"></span> Referenced</span>
+                    <span class="cg-legend-item"><span class="graph-stat-dot dot-related"></span> Related</span>
                 </div>
             </div>
         </div>
 
-        <!-- Right Panel: Hovered Node -->
+        <!-- Right Panel: Paper Details (click-driven) -->
         <aside class="cg-right-panel" id="cgRightPanel">
             <h3 class="cg-panel-heading">Paper Details</h3>
             <div id="cgHoverContent" class="cg-panel-body">
-                <p class="cg-panel-empty">Hover over a node to see details.</p>
+                <p class="cg-panel-empty">Click a node to see details.</p>
             </div>
         </aside>
 
@@ -132,5 +137,6 @@
 
 {% block scripts %}
 <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/cytoscape-fcose@2.2.0/cytoscape-fcose.js"></script>
 <script src="{{ url_for('citation_graph.static', filename='js/citation_graph.js') }}"></script>
 {% endblock %}
