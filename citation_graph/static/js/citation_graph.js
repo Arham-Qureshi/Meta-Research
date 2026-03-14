@@ -14,6 +14,7 @@
     var _cinemaMode = false;
     var _allNodes = [];            /* cached for paper list */
     var _activeListId = null;      /* currently selected list item */
+    var _filterState = { citation: true, reference: true, related: true };
 
     /* ── Type → Color Mapping ────────────────────────────────── */
     var TYPE_COLORS = {
@@ -672,6 +673,68 @@
         });
 
         bindControls(isStandalone);
+        bindLegendFilters();
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       LEGEND FILTERING — Toggle node types on/off
+       ════════════════════════════════════════════════════════════ */
+    function bindLegendFilters() {
+        document.querySelectorAll('.cg-legend-item[data-filter]').forEach(function (item) {
+            item.addEventListener('click', function () {
+                var type = item.getAttribute('data-filter');
+                if (!type) return;
+
+                /* Toggle state */
+                _filterState[type] = !_filterState[type];
+                item.classList.toggle('inactive', !_filterState[type]);
+
+                applyFilters();
+            });
+        });
+    }
+
+    function applyFilters() {
+        if (!cy) return;
+
+        /* Toggle Cytoscape nodes + connected edges */
+        ['citation', 'reference', 'related'].forEach(function (type) {
+            var visible = _filterState[type];
+            var nodes = cy.nodes('[type="' + type + '"]');
+            if (visible) {
+                nodes.style('display', 'element');
+                nodes.connectedEdges().style('display', 'element');
+            } else {
+                nodes.style('display', 'none');
+                nodes.connectedEdges().style('display', 'none');
+            }
+        });
+
+        /* Also ensure edges between two visible nodes stay visible */
+        cy.edges().forEach(function (edge) {
+            var src = edge.source();
+            var tgt = edge.target();
+            if (src.style('display') === 'element' && tgt.style('display') === 'element') {
+                edge.style('display', 'element');
+            }
+        });
+
+        /* Toggle left-panel list items */
+        var listEl = document.getElementById('cgPaperList');
+        if (listEl) {
+            listEl.querySelectorAll('.cg-list-item').forEach(function (item) {
+                var nodeId = item.getAttribute('data-node-id');
+                var nodeData = null;
+                for (var i = 0; i < _allNodes.length; i++) {
+                    if (_allNodes[i].id === nodeId) { nodeData = _allNodes[i]; break; }
+                }
+                if (!nodeData || nodeData.type === 'center') {
+                    item.style.display = '';
+                    return;
+                }
+                item.style.display = _filterState[nodeData.type] ? '' : 'none';
+            });
+        }
     }
 
     /* ════════════════════════════════════════════════════════════
