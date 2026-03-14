@@ -147,7 +147,8 @@ def _fetch_batch(ids: list[str], max_items: int,
         )
         resp.raise_for_status()
         items = resp.json().get("results", [])
-    except Exception:
+    except Exception as exc:
+        print(f"[OpenAlex] _fetch_batch({node_type}) error: {exc}")
         return []
 
     results = []
