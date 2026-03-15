@@ -43,6 +43,10 @@
                     class="nav-link {% if request.endpoint == 'bookmarks.page' %}active{% endif %}">
                     Collections
                 </a>
+                <a href="{{ url_for('pages.dashboard') }}"
+                    class="nav-link {% if request.endpoint == 'pages.dashboard' %}active{% endif %}">
+                    Dashboard
+                </a>
                 {% endif %}
             </div>
             <div class="nav-auth">

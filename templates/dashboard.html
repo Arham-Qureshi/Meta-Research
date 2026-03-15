@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – Meta Research{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-page" id="dashboardPage">
+    <div class="dashboard-header">
+        <div>
+            <span class="discover-badge">YOUR WORKSPACE</span>
+            <h1 class="dashboard-title">
+                Welcome back, <span class="gradient-text">{{ current_user.username }}</span>
+            </h1>
+            <p class="dashboard-subtitle">Your research activity at a glance.</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+            <span class="stat-card-icon">📑</span>
+            <div class="stat-card-value" id="statBookmarks">–</div>
+            <div class="stat-card-label">Bookmarks</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-icon">📁</span>
+            <div class="stat-card-value" id="statCollections">–</div>
+            <div class="stat-card-label">Collections</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-icon">🔍</span>
+            <div class="stat-card-value" id="statSearches">–</div>
+            <div class="stat-card-label">Searches</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-icon">📄</span>
+            <div class="stat-card-value" id="statViews">–</div>
+            <div class="stat-card-label">Papers Viewed</div>
+        </div>
+    </div>
+
+    <!-- Activity Panels -->
+    <div class="activity-grid">
+        <!-- Recent Searches -->
+        <div class="activity-panel">
+            <div class="activity-panel-header">
+                <h3 class="activity-panel-title">
+                    <span>🔍</span> Recent Searches
+                </h3>
+                <button class="btn btn-ghost btn-sm" id="clearHistoryBtn">Clear</button>
+            </div>
+            <div class="activity-list" id="searchesList">
+                <div class="activity-empty">No searches yet. Go discover!</div>
+            </div>
+        </div>
+
+        <!-- Recently Viewed Papers -->
+        <div class="activity-panel">
+            <div class="activity-panel-header">
+                <h3 class="activity-panel-title">
+                    <span>📄</span> Recently Viewed
+                </h3>
+            </div>
+            <div class="activity-list" id="viewsList">
+                <div class="activity-empty">No papers viewed yet.</div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
