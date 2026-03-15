@@ -7,49 +7,100 @@
 
 {% block content %}
 <section class="dashboard-page" id="dashboardPage">
-    <div class="dashboard-header">
-        <div>
-            <span class="discover-badge">YOUR WORKSPACE</span>
-            <h1 class="dashboard-title">
+
+    <!-- ═══ Hero Banner ═══════════════════════════════════════ -->
+    <div class="dash-hero">
+        <div class="dash-hero-content">
+            <span class="dash-hero-badge">YOUR WORKSPACE</span>
+            <h1 class="dash-hero-title">
                 Welcome back, <span class="gradient-text">{{ current_user.username }}</span>
             </h1>
-            <p class="dashboard-subtitle">Your research activity at a glance.</p>
+            <p class="dash-hero-subtitle">Your research journey, visualised.</p>
+            <a href="{{ url_for('pages.index') }}" class="btn btn-primary dash-hero-cta">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                Start Searching
+            </a>
+        </div>
+        <div class="dash-hero-visual">
+            <div class="dash-hero-orbit">
+                <span class="orbit-dot orbit-dot-1">📑</span>
+                <span class="orbit-dot orbit-dot-2">🔍</span>
+                <span class="orbit-dot orbit-dot-3">📄</span>
+                <span class="orbit-dot orbit-dot-4">🧠</span>
+            </div>
         </div>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- ═══ Stats Cards ═══════════════════════════════════════ -->
     <div class="stats-grid" id="statsGrid">
-        <div class="stat-card">
+        <div class="stat-card stat-card-bookmarks">
+            <div class="stat-card-glow"></div>
             <span class="stat-card-icon">📑</span>
             <div class="stat-card-value" id="statBookmarks">–</div>
             <div class="stat-card-label">Bookmarks</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card stat-card-collections">
+            <div class="stat-card-glow"></div>
             <span class="stat-card-icon">📁</span>
             <div class="stat-card-value" id="statCollections">–</div>
             <div class="stat-card-label">Collections</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card stat-card-searches">
+            <div class="stat-card-glow"></div>
             <span class="stat-card-icon">🔍</span>
             <div class="stat-card-value" id="statSearches">–</div>
             <div class="stat-card-label">Searches</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card stat-card-views">
+            <div class="stat-card-glow"></div>
             <span class="stat-card-icon">📄</span>
             <div class="stat-card-value" id="statViews">–</div>
             <div class="stat-card-label">Papers Viewed</div>
         </div>
     </div>
 
-    <!-- Activity Panels -->
+    <!-- ═══ Middle Row: Chart + Topics ════════════════════════ -->
+    <div class="dash-middle-grid">
+        <!-- Weekly Activity Chart -->
+        <div class="dash-panel chart-panel">
+            <div class="dash-panel-header">
+                <h3 class="dash-panel-title">📊 Weekly Activity</h3>
+                <span class="dash-panel-badge" id="chartTotal">0 total</span>
+            </div>
+            <div class="chart-container" id="chartContainer">
+                <div class="chart-bars" id="chartBars">
+                    <!-- Filled by JS -->
+                </div>
+                <div class="chart-labels" id="chartLabels">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+            <div class="chart-legend">
+                <span class="legend-item"><span class="legend-dot legend-dot-search"></span> Searches</span>
+                <span class="legend-item"><span class="legend-dot legend-dot-view"></span> Views</span>
+            </div>
+        </div>
+
+        <!-- Top Topics -->
+        <div class="dash-panel topics-panel">
+            <div class="dash-panel-header">
+                <h3 class="dash-panel-title">🏷️ Top Topics</h3>
+            </div>
+            <div class="topics-grid" id="topicsGrid">
+                <div class="activity-empty">Search for papers to see your top topics.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Activity Panels ═══════════════════════════════════ -->
     <div class="activity-grid">
         <!-- Recent Searches -->
-        <div class="activity-panel">
-            <div class="activity-panel-header">
-                <h3 class="activity-panel-title">
-                    <span>🔍</span> Recent Searches
-                </h3>
-                <button class="btn btn-ghost btn-sm" id="clearHistoryBtn">Clear</button>
+        <div class="dash-panel">
+            <div class="dash-panel-header">
+                <h3 class="dash-panel-title">🔍 Recent Searches</h3>
+                <button class="btn btn-ghost btn-sm" id="clearHistoryBtn">Clear All</button>
             </div>
             <div class="activity-list" id="searchesList">
                 <div class="activity-empty">No searches yet. Go discover!</div>
@@ -57,16 +108,19 @@
         </div>
 
         <!-- Recently Viewed Papers -->
-        <div class="activity-panel">
-            <div class="activity-panel-header">
-                <h3 class="activity-panel-title">
-                    <span>📄</span> Recently Viewed
-                </h3>
+        <div class="dash-panel">
+            <div class="dash-panel-header">
+                <h3 class="dash-panel-title">📄 Recently Viewed</h3>
             </div>
             <div class="activity-list" id="viewsList">
                 <div class="activity-empty">No papers viewed yet.</div>
             </div>
         </div>
+    </div>
+
+    <!-- Live indicator -->
+    <div class="dash-live-indicator" id="liveIndicator">
+        <span class="live-dot"></span> Live
     </div>
 </section>
 {% endblock %}

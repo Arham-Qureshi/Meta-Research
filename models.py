@@ -136,7 +136,7 @@ class SearchHistory(db.Model):
     """Tracks user search queries for the dashboard."""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    query = db.Column(db.String(512), nullable=False)
+    search_query = db.Column(db.String(512), nullable=False)
     source = db.Column(db.String(64), default='all')
     result_count = db.Column(db.Integer, default=0)
     searched_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -144,14 +144,14 @@ class SearchHistory(db.Model):
     def to_dict(self) -> dict:
         return {
             'id': self.id,
-            'query': self.query,
+            'query': self.search_query,
             'source': self.source,
             'result_count': self.result_count,
             'searched_at': self.searched_at.isoformat(),
         }
 
     def __repr__(self):
-        return f'<SearchHistory {self.query[:30]}>'
+        return f'<SearchHistory {self.search_query[:30]}>'
 
 
 # ═══════════════════════════════════════════════════════════════
