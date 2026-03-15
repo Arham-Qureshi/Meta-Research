@@ -30,7 +30,7 @@ def api_search():
         from models import SearchHistory
         entry = SearchHistory(
             user_id=current_user.id,
-            query=query,
+            search_query=query,
             source=source,
             result_count=len(results),
         )

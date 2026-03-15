@@ -1,12 +1,14 @@
 """
 routes/dashboard.py — Dashboard API routes.
 
-Provides stats and activity data for the user dashboard.
+Provides stats, weekly activity chart data, top topics,
+and recent activity for the user dashboard.
 """
 
-from flask import Blueprint, request, jsonify
+from datetime import datetime, timedelta
+from flask import Blueprint, jsonify
 from flask_login import login_required, current_user
-from sqlalchemy import func
+from sqlalchemy import func, cast, Date
 from extensions import db
 from models import Bookmark, Collection, SearchHistory, PaperView
 
@@ -30,13 +32,57 @@ def stats():
      .order_by(func.count(SearchHistory.id).desc()).first()
     top_source = top_source_row[0] if top_source_row else 'N/A'
 
+    # Top search topics (most repeated queries)
+    top_queries = db.session.query(
+        SearchHistory.search_query, func.count(SearchHistory.id).label('cnt')
+    ).filter(SearchHistory.user_id == uid)\
+     .group_by(SearchHistory.search_query)\
+     .order_by(func.count(SearchHistory.id).desc()).limit(5).all()
+    topics = [{'query': r[0], 'count': r[1]} for r in top_queries]
+
     return jsonify({
         'total_bookmarks': total_bookmarks,
         'total_collections': total_collections,
         'total_searches': total_searches,
         'total_views': total_views,
         'top_source': top_source,
+        'topics': topics,
     })
+
+
+@bp.route('/api/dashboard/chart')
+@login_required
+def chart():
+    """Return daily activity counts for the last 7 days."""
+    uid = current_user.id
+    today = datetime.utcnow().date()
+    days = []
+
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        day_start = datetime.combine(day, datetime.min.time())
+        day_end = datetime.combine(day + timedelta(days=1), datetime.min.time())
+
+        searches = SearchHistory.query.filter(
+            SearchHistory.user_id == uid,
+            SearchHistory.searched_at >= day_start,
+            SearchHistory.searched_at < day_end,
+        ).count()
+
+        views = PaperView.query.filter(
+            PaperView.user_id == uid,
+            PaperView.viewed_at >= day_start,
+            PaperView.viewed_at < day_end,
+        ).count()
+
+        days.append({
+            'date': day.isoformat(),
+            'label': day.strftime('%a'),
+            'searches': searches,
+            'views': views,
+        })
+
+    return jsonify({'days': days})
 
 
 @bp.route('/api/dashboard/activity')
