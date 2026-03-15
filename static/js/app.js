@@ -1,7 +1,7 @@
 /* ============================================================
    Meta Research – Main JavaScript
    Search · Bookmarks · Keyboard Shortcuts · Enhanced Cards
-   Real-Time Sync Filtering
+   Real-Time Sync Filtering · Citation Export
    ============================================================ */
 
 // ---------------------------------------------------------------------------
@@ -326,6 +326,23 @@ function createPaperCard(paper, isBookmarked) {
                             View
                        </a>`
             : ''}
+                <div class="cite-dropdown-wrapper">
+                    <button class="btn btn-ghost btn-sm btn-cite" onclick="toggleCiteDropdown(event)">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 17C2 17 2 13 2 11c0-3.5 2-6 6-6 1 0 2 .5 2 .5"/>
+                            <path d="M6 17l4-8"/>
+                            <path d="M16 17c-4 0-4-4-4-6 0-3.5 2-6 6-6 1 0 2 .5 2 .5"/>
+                            <path d="M16 17l4-8"/>
+                        </svg>
+                        Cite
+                    </button>
+                    <div class="cite-dropdown">
+                        <button class="cite-option" onclick="copyCitation(this, 'bibtex')" data-paper='${JSON.stringify(paper).replace(/'/g, "&#39;")}'>BibTeX</button>
+                        <button class="cite-option" onclick="copyCitation(this, 'apa')" data-paper='${JSON.stringify(paper).replace(/'/g, "&#39;")}'>APA</button>
+                        <button class="cite-option" onclick="copyCitation(this, 'mla')" data-paper='${JSON.stringify(paper).replace(/'/g, "&#39;")}'>MLA</button>
+                        <button class="cite-option" onclick="copyCitation(this, 'chicago')" data-paper='${JSON.stringify(paper).replace(/'/g, "&#39;")}'>Chicago</button>
+                    </div>
+                </div>
             </div>
             ${citations}
         </div>
@@ -432,3 +449,59 @@ function escapeAttr(text) {
         }, 5000);
     });
 })();
+
+// ---------------------------------------------------------------------------
+// Citation Export — Cite dropdown + clipboard copy + toast
+// ---------------------------------------------------------------------------
+function toggleCiteDropdown(e) {
+    e.stopPropagation();
+    const wrapper = e.currentTarget.closest('.cite-dropdown-wrapper');
+    const dropdown = wrapper.querySelector('.cite-dropdown');
+    // Close all other open dropdowns first
+    document.querySelectorAll('.cite-dropdown.open').forEach(d => {
+        if (d !== dropdown) d.classList.remove('open');
+    });
+    dropdown.classList.toggle('open');
+}
+
+async function copyCitation(btn, format) {
+    const paper = JSON.parse(btn.dataset.paper);
+    try {
+        const res = await fetch('/api/cite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paper, format }),
+        });
+        const data = await res.json();
+        if (data.citation) {
+            await navigator.clipboard.writeText(data.citation);
+            showToast(`${format.toUpperCase()} copied to clipboard`);
+        } else {
+            showToast('Failed to generate citation', true);
+        }
+    } catch (err) {
+        console.error('Citation error:', err);
+        showToast('Failed to copy citation', true);
+    }
+    // Close dropdown
+    btn.closest('.cite-dropdown').classList.remove('open');
+}
+
+function showToast(message, isError = false) {
+    const existing = document.querySelector('.toast-notification');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${isError ? 'toast-error' : 'toast-success'}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('visible'));
+    setTimeout(() => {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+// Close cite dropdowns when clicking outside
+document.addEventListener('click', () => {
+    document.querySelectorAll('.cite-dropdown.open').forEach(d => d.classList.remove('open'));
+});
