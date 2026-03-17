@@ -1,30 +1,19 @@
-/* ═══════════════════════════════════════════════════════════════
-   discover.js  –  Trending Papers & Science News Feed
-   ═══════════════════════════════════════════════════════════════ */
 
 (function () {
     'use strict';
-
-    /* ── DOM refs ─────────────────────────────────────────────── */
     var trendingGrid = null;
     var trendingLoading = null;
     var newsGrid = null;
     var newsLoading = null;
-
-    /* ── Init on DOM ready ───────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', function () {
         trendingGrid = document.getElementById('trendingGrid');
         trendingLoading = document.getElementById('trendingLoading');
         newsGrid = document.getElementById('newsGrid');
         newsLoading = document.getElementById('newsLoading');
-
         loadTrending();
         loadNews();
-
-        /* Refresh buttons */
         var refreshTrending = document.getElementById('refreshTrending');
         var refreshNews = document.getElementById('refreshNews');
-
         if (refreshTrending) {
             refreshTrending.addEventListener('click', function () {
                 refreshTrending.classList.add('spinning');
@@ -33,7 +22,6 @@
                 });
             });
         }
-
         if (refreshNews) {
             refreshNews.addEventListener('click', function () {
                 refreshNews.classList.add('spinning');
@@ -43,13 +31,10 @@
             });
         }
     });
-
-    /* ── Load Trending Papers ────────────────────────────────── */
     function loadTrending(onDone) {
         if (!trendingGrid) return;
         showSkeleton(trendingLoading, true);
         trendingGrid.innerHTML = '';
-
         fetch('/api/trending?max=12')
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -69,13 +54,10 @@
                 if (onDone) onDone();
             });
     }
-
-    /* ── Load News ───────────────────────────────────────────── */
     function loadNews(onDone) {
         if (!newsGrid) return;
         showSkeleton(newsLoading, true);
         newsGrid.innerHTML = '';
-
         fetch('/api/news')
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -95,22 +77,17 @@
                 if (onDone) onDone();
             });
     }
-
-    /* ── Render Trending Cards ───────────────────────────────── */
     function renderTrendingCards(papers) {
         papers.forEach(function (paper, idx) {
             var card = document.createElement('div');
             card.className = 'trending-card';
             card.setAttribute('role', 'article');
-
             var cats = (paper.categories || []).slice(0, 3).map(function (c) {
                 return '<span class="trending-cat-chip">' + esc(c) + '</span>';
             }).join('');
-
             var journal = paper.journal
                 ? '<span class="trending-meta-chip meta-chip-journal" title="' + esc(paper.journal) + '">' + esc(truncate(paper.journal, 22)) + '</span>'
                 : '';
-
             card.innerHTML =
                 '<span class="trending-rank">#' + (idx + 1) + '</span>' +
                 '<h3 class="trending-card-title">' + esc(paper.title) + '</h3>' +
@@ -122,8 +99,6 @@
                 '</div>' +
                 '<p class="trending-card-summary">' + esc(paper.summary || '') + '</p>' +
                 (cats ? '<div class="trending-card-categories">' + cats + '</div>' : '');
-
-            /* Click → go to paper detail */
             card.addEventListener('click', function () {
                 var pid = paper.id || '';
                 if (pid) {
@@ -132,11 +107,8 @@
                     window.open(paper.abstract_url, '_blank');
                 }
             });
-
             trendingGrid.appendChild(card);
         });
-
-        /* Staggered entrance animation */
         var cards = trendingGrid.querySelectorAll('.trending-card');
         cards.forEach(function (card, i) {
             card.style.opacity = '0';
@@ -148,8 +120,6 @@
             }, i * 60);
         });
     }
-
-    /* ── Render News Cards ───────────────────────────────────── */
     function renderNewsCards(articles) {
         articles.forEach(function (article) {
             var card = document.createElement('a');
@@ -157,15 +127,12 @@
             card.href = article.url || '#';
             card.target = '_blank';
             card.rel = 'noopener noreferrer';
-
             var imageHtml = article.image
                 ? '<img class="news-card-image" src="' + esc(article.image) + '" alt="" loading="lazy">'
                 : '<div class="news-card-image-placeholder">📰</div>';
-
             var providerBadge = article.provider
                 ? '<span class="news-card-provider">' + esc(article.provider) + '</span>'
                 : '';
-
             card.innerHTML =
                 imageHtml +
                 '<div class="news-card-body">' +
@@ -174,11 +141,8 @@
                 '<p class="news-card-desc">' + esc(article.description || '') + '</p>' +
                 '<span class="news-card-date">' + formatDate(article.published) + providerBadge + '</span>' +
                 '</div>';
-
             newsGrid.appendChild(card);
         });
-
-        /* Staggered entrance */
         var cards = newsGrid.querySelectorAll('.news-card');
         cards.forEach(function (card, i) {
             card.style.opacity = '0';
@@ -190,26 +154,21 @@
             }, i * 60);
         });
     }
-
-    /* ── Helpers ──────────────────────────────────────────────── */
     function esc(text) {
         if (!text) return '';
         var d = document.createElement('div');
         d.textContent = text;
         return d.innerHTML;
     }
-
     function truncate(str, len) {
         if (!str) return '';
         return str.length > len ? str.substring(0, len) + '…' : str;
     }
-
     function formatNum(n) {
         if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
         if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
         return String(n);
     }
-
     function formatDate(dateStr) {
         if (!dateStr) return '';
         try {
@@ -220,11 +179,9 @@
             return dateStr;
         }
     }
-
     function showSkeleton(el, show) {
         if (el) el.style.display = show ? 'grid' : 'none';
     }
-
     function emptyState(icon, title, text) {
         return '<div class="empty-state">' +
             '<span class="empty-state-icon">' + icon + '</span>' +

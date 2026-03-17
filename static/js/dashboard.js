@@ -1,32 +1,21 @@
-/* ============================================================
-   Dashboard — Real-Time Stats, Chart, Activity Feed
-   Auto-polls every 15 seconds for live updates.
-   ============================================================ */
+
 (function () {
-    const POLL_INTERVAL = 15_000; // 15 seconds
+    const POLL_INTERVAL = 15_000;
     let pollTimer = null;
-
     document.addEventListener('DOMContentLoaded', init);
-
     async function init() {
         await refreshAll();
         startPolling();
         bindEvents();
     }
-
-    // ── Polling ──────────────────────────────────────────────
     function startPolling() {
         pollTimer = setInterval(refreshAll, POLL_INTERVAL);
-        // Show live indicator after first successful load
         const indicator = document.getElementById('liveIndicator');
         if (indicator) indicator.classList.add('visible');
     }
-
     async function refreshAll() {
         await Promise.all([loadStats(), loadChart(), loadActivity()]);
     }
-
-    // ── Stats ────────────────────────────────────────────────
     async function loadStats() {
         try {
             const res = await fetch('/api/dashboard/stats');
@@ -40,7 +29,6 @@
             console.error('Failed to load stats', err);
         }
     }
-
     function animateStat(id, newValue) {
         const el = document.getElementById(id);
         if (!el) return;
@@ -51,8 +39,6 @@
             setTimeout(() => el.classList.remove('updated'), 450);
         }
     }
-
-    // ── Weekly Chart ─────────────────────────────────────────
     async function loadChart() {
         try {
             const res = await fetch('/api/dashboard/chart');
@@ -62,16 +48,13 @@
             console.error('Failed to load chart', err);
         }
     }
-
     function renderChart(days) {
         const barsContainer = document.getElementById('chartBars');
         const labelsContainer = document.getElementById('chartLabels');
         const totalEl = document.getElementById('chartTotal');
         if (!barsContainer || !days.length) return;
-
         const maxVal = Math.max(1, ...days.map(d => Math.max(d.searches, d.views)));
         let totalActivity = 0;
-
         barsContainer.innerHTML = days.map(d => {
             const sPct = (d.searches / maxVal) * 100;
             const vPct = (d.views / maxVal) * 100;
@@ -86,24 +69,18 @@
                     </div>
                 </div>`;
         }).join('');
-
         labelsContainer.innerHTML = days.map(d =>
             `<span class="chart-label">${d.label}</span>`
         ).join('');
-
         if (totalEl) totalEl.textContent = `${totalActivity} total`;
     }
-
-    // ── Topics ───────────────────────────────────────────────
     function renderTopics(topics) {
         const grid = document.getElementById('topicsGrid');
         if (!grid) return;
-
         if (topics.length === 0) {
             grid.innerHTML = '<div class="activity-empty">Search for papers to see your top topics.</div>';
             return;
         }
-
         const maxCount = topics[0]?.count || 1;
         grid.innerHTML = topics.map((t, i) => {
             const pct = Math.round((t.count / maxCount) * 100);
@@ -121,8 +98,6 @@
                 </a>`;
         }).join('');
     }
-
-    // ── Activity Feed ────────────────────────────────────────
     async function loadActivity() {
         try {
             const res = await fetch('/api/dashboard/activity');
@@ -133,7 +108,6 @@
             console.error('Failed to load activity', err);
         }
     }
-
     function renderSearches(searches) {
         const list = document.getElementById('searchesList');
         if (!list) return;
@@ -152,7 +126,6 @@
             </a>`
         ).join('');
     }
-
     function renderViews(views) {
         const list = document.getElementById('viewsList');
         if (!list) return;
@@ -172,8 +145,6 @@
                 </a>`;
         }).join('');
     }
-
-    // ── Events ───────────────────────────────────────────────
     function bindEvents() {
         const clearBtn = document.getElementById('clearHistoryBtn');
         if (clearBtn) {
@@ -184,15 +155,11 @@
             });
         }
     }
-
-    // ── Re-search from activity ──────────────────────────────
     window.reSearch = function (e, query) {
         e.preventDefault();
         sessionStorage.setItem('reSearchQuery', query);
         window.location.href = '/';
     };
-
-    // ── Helpers ──────────────────────────────────────────────
     function timeAgo(isoStr) {
         const diff = Date.now() - new Date(isoStr).getTime();
         const mins = Math.floor(diff / 60000);
@@ -203,18 +170,14 @@
         const days = Math.floor(hrs / 24);
         return `${days}d ago`;
     }
-
     function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-
     function escapeAttr(text) {
         return (text || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-
-    // Cleanup on page leave
     window.addEventListener('beforeunload', () => clearInterval(pollTimer));
 })();

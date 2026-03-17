@@ -1,67 +1,41 @@
-/* ============================================================
-   Meta Research – Global Stylesheet
-   Dark Theme · Rich Animations · Modern UI
-   ============================================================ */
-
-/* --- CSS Custom Properties (Design Tokens) --- */
 :root {
-    /* Background & Surface */
     --bg-primary: #000000;
     --bg-secondary: #000000;
     --bg-card: #0a0a0c;
     --bg-card-hover: #121216;
     --bg-elevated: #1a1a20;
     --bg-input: #08080a;
-
-    /* Accent & Brand */
     --accent-primary: #6366f1;
-    /* Indigo */
     --accent-primary-glow: rgba(99, 102, 241, 0.25);
     --accent-secondary: #06b6d4;
-    /* Cyan */
     --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
     --accent-gradient-text: linear-gradient(135deg, #818cf8, #c084fc, #22d3ee);
-
-    /* Text */
     --text-primary: #e2e8f0;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
     --text-on-accent: #ffffff;
-
-    /* Borders */
     --border-subtle: rgba(255, 255, 255, 0.06);
     --border-medium: rgba(255, 255, 255, 0.1);
     --border-focus: rgba(99, 102, 241, 0.5);
-
-    /* Status */
     --success: #22c55e;
     --error: #ef4444;
     --warning: #f59e0b;
-
-    /* Shadows */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.6);
     --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.15);
-
-    /* Spacing & Radius */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 24px;
     --radius-full: 9999px;
-
-    /* Fonts */
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-
-    /* Transitions */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* --- Reset & Base --- */
 *,
 *::before,
 *::after {
@@ -100,7 +74,6 @@ a:hover {
     color: var(--text-on-accent);
 }
 
-/* --- Premium Interactive Background Canvas --- */
 #bgCanvas {
     position: fixed;
     top: 0;
@@ -111,7 +84,6 @@ a:hover {
     z-index: 0;
 }
 
-/* --- Navbar --- */
 .navbar {
     position: fixed;
     top: 0;
@@ -245,7 +217,6 @@ a:hover {
     color: var(--text-primary);
 }
 
-/* --- Buttons --- */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -334,7 +305,6 @@ a:hover {
     }
 }
 
-/* --- Mobile Menu --- */
 .mobile-menu-btn {
     display: none;
     flex-direction: column;
@@ -353,7 +323,6 @@ a:hover {
     transition: all var(--transition-fast);
 }
 
-/* --- Main Content --- */
 .main-content {
     position: relative;
     z-index: 1;
@@ -361,15 +330,12 @@ a:hover {
     padding-top: 64px;
 }
 
-/* --- Hero Section --- */
 .hero {
     position: relative;
     padding: 6rem 1.5rem 4rem;
     text-align: center;
     overflow: hidden;
 }
-
-/* hero glow removed for true vantablack canvas background */
 
 .hero-content {
     max-width: 720px;
@@ -401,7 +367,6 @@ a:hover {
     margin-bottom: 2.5rem;
 }
 
-/* --- Search Bar --- */
 .search-container {
     margin-bottom: 2rem;
 }
@@ -477,7 +442,6 @@ a:hover {
     transform: translateX(3px);
 }
 
-/* --- Search Filters --- */
 .search-filters {
     display: flex;
     justify-content: center;
@@ -509,7 +473,6 @@ a:hover {
     border-color: var(--accent-primary);
 }
 
-/* --- Hero Stats --- */
 .hero-stats {
     display: flex;
     justify-content: center;
@@ -541,14 +504,12 @@ a:hover {
     margin-top: 0.15rem;
 }
 
-/* --- Results Section (two-column layout) --- */
 .results-section {
     display: none;
     max-width: 1280px;
     margin: 0 auto;
     padding: 0 1.5rem 1rem;
     gap: 2rem;
-    /* To enable independent scrolling below header */
     height: calc(100vh - 80px);
     margin-top: 2rem;
     overflow: hidden;
@@ -586,7 +547,6 @@ a:hover {
     border: 1px solid var(--border-subtle);
 }
 
-/* --- Results Main --- */
 .results-main {
     min-width: 0;
     height: calc(100vh - 100px);
@@ -595,14 +555,12 @@ a:hover {
     padding-right: 1rem;
 }
 
-/* --- Filters Sidebar --- */
 .filters-sidebar {
     height: calc(100vh - 100px);
     overflow-y: auto;
     padding-bottom: 4rem;
 }
 
-/* --- Loading --- */
 .loading-container {
     display: none;
     flex-direction: column;
@@ -630,7 +588,6 @@ a:hover {
     font-size: 0.9rem;
 }
 
-/* --- Paper Cards Grid --- */
 .papers-grid {
     display: none;
     grid-template-columns: 1fr;
@@ -640,8 +597,6 @@ a:hover {
 .papers-grid.active {
     display: grid;
 }
-
-/* paper-card, source-badge, paper-actions → see enhanced versions at bottom of file */
 
 @keyframes fadeInUp {
     from {
@@ -667,9 +622,6 @@ a:hover {
     }
 }
 
-/* legacy /* legacy paper CSS removed */
-
-/* --- No Results --- */
 .no-results {
     display: none;
     flex-direction: column;
@@ -699,7 +651,6 @@ a:hover {
     font-size: 0.9rem;
 }
 
-/* --- Features Section --- */
 .features-section {
     max-width: 1100px;
     margin: 0 auto;
@@ -752,7 +703,6 @@ a:hover {
     line-height: 1.5;
 }
 
-/* --- Auth Pages --- */
 .auth-section {
     display: flex;
     align-items: center;
@@ -916,7 +866,6 @@ a:hover {
     color: var(--accent-primary);
 }
 
-/* --- Bookmarks Page --- */
 .bookmarks-section {
     max-width: 1200px;
     margin: 0 auto;
@@ -941,7 +890,6 @@ a:hover {
     margin-top: 0.35rem;
 }
 
-/* --- Flash Messages --- */
 .flash-container {
     position: fixed;
     top: 72px;
@@ -985,7 +933,6 @@ a:hover {
     }
 }
 
-/* --- Footer --- */
 .footer {
     position: relative;
     z-index: 1;
@@ -1029,7 +976,6 @@ a:hover {
     opacity: 0.4;
 }
 
-/* --- Scrollbar --- */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -1047,7 +993,6 @@ a:hover {
     background: var(--text-muted);
 }
 
-/* --- Responsive --- */
 @media (max-width: 968px) {
     .results-section.active {
         grid-template-columns: 1fr;
@@ -1117,7 +1062,6 @@ a:hover {
     }
 }
 
-/* --- Utility --- */
 .error-text {
     color: var(--error);
     font-size: 0.9rem;
@@ -1127,7 +1071,6 @@ a:hover {
     display: none !important;
 }
 
-/* --- Paper Card expand/collapse summary --- */
 .paper-summary.expanded {
     -webkit-line-clamp: unset;
     display: block;
@@ -1148,9 +1091,6 @@ a:hover {
     text-decoration: underline;
 }
 
-/* ============================================================
-   NEW: Hero Badge
-   ============================================================ */
 .hero-badge {
     display: inline-block;
     padding: 0.3rem 1rem;
@@ -1165,9 +1105,6 @@ a:hover {
     margin-bottom: 1.5rem;
 }
 
-/* ============================================================
-   NEW: Search keyboard hints
-   ============================================================ */
 .search-shortcut-hint {
     display: flex;
     align-items: center;
@@ -1190,9 +1127,6 @@ a:hover {
     line-height: 1;
 }
 
-/* ============================================================
-   NEW: Content-type Tabs
-   ============================================================ */
 .content-type-tabs {
     display: flex;
     justify-content: center;
@@ -1226,9 +1160,6 @@ a:hover {
     box-shadow: 0 0 0 1px var(--border-subtle);
 }
 
-/* ============================================================
-   NEW: Advanced Left Sidebar Filters
-   ============================================================ */
 .filters-sidebar {
     display: flex;
     flex-direction: column;
@@ -1237,8 +1168,6 @@ a:hover {
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: 1.25rem;
-
-    /* Independent layout properties */
     height: 100%;
     overflow-y: auto;
 }
@@ -1252,7 +1181,6 @@ a:hover {
     margin-bottom: 0.65rem;
 }
 
-/* Source chips (vertical list) */
 .source-filter-list {
     display: flex;
     flex-direction: column;
@@ -1283,7 +1211,6 @@ a:hover {
     color: var(--accent-primary);
 }
 
-/* Custom Checkboxes */
 .filter-checkbox-row {
     display: flex;
     align-items: center;
@@ -1332,7 +1259,6 @@ a:hover {
     transform: rotate(40deg);
 }
 
-/* Domain list */
 .domain-list {
     display: flex;
     flex-direction: column;
@@ -1362,7 +1288,6 @@ a:hover {
     font-weight: 600;
 }
 
-/* Year Range Dual-Slider */
 .year-range-display {
     display: flex;
     justify-content: space-between;
@@ -1418,9 +1343,6 @@ a:hover {
     transform: scale(1.2);
 }
 
-/* ============================================================
-   NEW: Enhanced Paper Cards
-   ============================================================ */
 .paper-card {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
@@ -1461,7 +1383,6 @@ a:hover {
     flex-shrink: 0;
 }
 
-/* Icon-only action buttons (top-right of card) */
 .icon-btn {
     width: 30px;
     height: 30px;
@@ -1492,7 +1413,6 @@ a:hover {
     color: var(--accent-primary);
 }
 
-/* Tags */
 .paper-tags {
     display: flex;
     gap: 0.35rem;
@@ -1511,7 +1431,6 @@ a:hover {
     border: 1px solid rgba(99, 102, 241, 0.15);
 }
 
-/* Card footer bar */
 .paper-footer {
     display: flex;
     align-items: center;
@@ -1530,7 +1449,6 @@ a:hover {
     align-items: center;
 }
 
-/* Card action button sizes */
 .btn-sm {
     padding: 0.38rem 0.75rem;
     font-size: 0.78rem;
@@ -1542,7 +1460,6 @@ a:hover {
     flex-shrink: 0;
 }
 
-/* AI Summary button – gradient glow */
 .btn-ai-summary {
     display: inline-flex;
     align-items: center;
@@ -1567,7 +1484,6 @@ a:hover {
     color: #fff;
 }
 
-/* PDF button */
 .btn-pdf {
     display: inline-flex;
     align-items: center;
@@ -1591,7 +1507,6 @@ a:hover {
     transform: translateY(-1px);
 }
 
-/* Citation badge */
 .citations-badge {
     display: inline-flex;
     align-items: center;
@@ -1608,7 +1523,6 @@ a:hover {
     flex-shrink: 0;
 }
 
-/* Source badge variants */
 .source-badge {
     font-size: 0.7rem;
     font-weight: 600;
@@ -1645,14 +1559,10 @@ a:hover {
     border-color: rgba(6, 182, 212, 0.18);
 }
 
-/* flash fade out */
 .flash-msg.fade-out {
     animation: fadeOut 0.3s ease forwards;
 }
 
-/* ============================================================
-   Citation Dropdown & Toast Notification
-   ============================================================ */
 .cite-dropdown-wrapper {
     position: relative;
 }
@@ -1710,7 +1620,6 @@ a:hover {
     color: var(--accent-primary);
 }
 
-/* Toast notification */
 .toast-notification {
     position: fixed;
     bottom: 2rem;
@@ -1746,7 +1655,6 @@ a:hover {
     box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
 }
 
-/* Export All button on bookmarks page */
 .bookmarks-header-row {
     display: flex;
     justify-content: space-between;
@@ -1778,9 +1686,6 @@ a:hover {
     color: var(--accent-secondary);
 }
 
-/* ============================================================
-   Bookmark Collections — Sidebar, Modal, Colour Picker
-   ============================================================ */
 .bookmarks-page {
     max-width: 1280px;
     margin: 0 auto;
@@ -1794,7 +1699,6 @@ a:hover {
     align-items: start;
 }
 
-/* Collections sidebar */
 .collections-sidebar {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
@@ -1915,7 +1819,6 @@ a:hover {
     color: var(--error);
 }
 
-/* Modal overlay */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -1964,7 +1867,6 @@ a:hover {
     margin-top: 1.5rem;
 }
 
-/* Colour picker */
 .color-picker {
     display: flex;
     gap: 0.5rem;
@@ -1990,20 +1892,22 @@ a:hover {
     box-shadow: 0 0 0 2px var(--bg-primary), 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
-/* Responsive: collapse sidebar on small screens */
 @media (max-width: 768px) {
     .bookmarks-layout {
         grid-template-columns: 1fr;
     }
+
     .collections-sidebar {
         position: static;
         flex-direction: row;
         overflow-x: auto;
     }
+
     .collections-list {
         flex-direction: row;
         gap: 0.35rem;
     }
+
     .collection-item {
         white-space: nowrap;
         padding: 0.4rem 0.75rem;

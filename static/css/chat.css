@@ -1,9 +1,3 @@
-/* ============================================================
-   Chat With Paper – Page Styles
-   Split-layout: paper info (left) + chat (right)
-   ============================================================ */
-
-/* --- Page Layout --- */
 .chat-page {
     max-width: 1400px;
     margin: 0 auto;
@@ -32,7 +26,6 @@
     min-height: calc(100vh - 200px);
 }
 
-/* --- Paper Info Panel (Left) --- */
 .paper-info-panel {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
@@ -138,7 +131,6 @@
     border-top: 1px solid var(--border-subtle);
 }
 
-/* --- Chat Panel (Right) --- */
 .chat-panel {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
@@ -196,7 +188,6 @@
     }
 }
 
-/* --- Messages Area --- */
 .chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -219,7 +210,6 @@
     border-radius: 3px;
 }
 
-/* Welcome message */
 .chat-welcome {
     text-align: center;
     padding: 2rem 1rem;
@@ -246,7 +236,6 @@
     margin: 0 auto;
 }
 
-/* Suggestion chips */
 .chat-suggestions {
     display: flex;
     flex-wrap: wrap;
@@ -275,7 +264,6 @@
     transform: translateY(-1px);
 }
 
-/* Message Bubbles */
 .chat-msg {
     display: flex;
     gap: 0.75rem;
@@ -334,7 +322,6 @@
     border: 1px solid var(--border-subtle);
 }
 
-/* Markdown content inside AI bubbles */
 .chat-msg.ai .chat-msg-bubble h2 {
     font-size: 1rem;
     font-weight: 700;
@@ -380,7 +367,6 @@
     border-radius: 4px;
 }
 
-/* Typing indicator */
 .chat-typing {
     display: flex;
     align-items: center;
@@ -444,7 +430,6 @@
     }
 }
 
-/* --- Chat Input Area --- */
 .chat-input-area {
     padding: 1rem 1.5rem;
     border-top: 1px solid var(--border-subtle);
@@ -520,7 +505,6 @@
     margin-top: 0.5rem;
 }
 
-/* --- TL;DR / Summarize Button --- */
 .btn-summarize {
     background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(99, 102, 241, 0.1));
     color: var(--accent-secondary);
@@ -552,7 +536,6 @@
     color: var(--accent-secondary);
 }
 
-/* --- Loading State for Paper Info --- */
 .paper-info-loading {
     display: flex;
     flex-direction: column;
@@ -568,7 +551,6 @@
     height: 36px;
 }
 
-/* --- Error Banner --- */
 .chat-error {
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.2);
@@ -580,7 +562,6 @@
     animation: fadeInUp 0.3s ease;
 }
 
-/* --- Responsive --- */
 @media (max-width: 900px) {
     .chat-layout {
         grid-template-columns: 1fr;

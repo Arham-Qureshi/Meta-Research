@@ -1,13 +1,7 @@
-/* ============================================================
-   Dynamic Typing Placeholder – Animated Search Hints
-   ============================================================ */
-
-/* Hide the native placeholder when our custom one is active */
 .search-input.has-dynamic-placeholder::placeholder {
     color: transparent;
 }
 
-/* The custom typing placeholder overlay */
 .dynamic-placeholder {
     position: absolute;
     left: 0;
@@ -16,7 +10,7 @@
     height: 100%;
     display: flex;
     align-items: center;
-    padding-left: 3.2rem; /* Align with the input text (past the search icon) */
+    padding-left: 3.2rem;
     pointer-events: none;
     z-index: 1;
     overflow: hidden;
@@ -30,7 +24,6 @@
     overflow: hidden;
 }
 
-/* Blinking cursor after the typed text */
 .dynamic-placeholder-cursor {
     display: inline-block;
     width: 2px;
@@ -43,11 +36,17 @@
 }
 
 @keyframes cursorBlink {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
 }
 
-/* When user focuses and starts typing, hide dynamic placeholder */
 .dynamic-placeholder.hidden {
     display: none;
 }

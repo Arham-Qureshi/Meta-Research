@@ -1,8 +1,3 @@
-/* ═══════════════════════════════════════════════════════════════
-   discover.css  –  Discover Page: Trending Papers & Science News
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ── Page Layout ──────────────────────────────────────────────── */
 .discover-page {
     padding: 2rem 1.5rem 4rem;
     max-width: 1320px;
@@ -50,7 +45,6 @@
     margin: 0 auto;
 }
 
-/* ── Section Headers ─────────────────────────────────────────── */
 .discover-section {
     margin-bottom: 3.5rem;
 }
@@ -118,7 +112,6 @@
     }
 }
 
-/* ── Trending Papers Grid ────────────────────────────────────── */
 .trending-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -264,7 +257,6 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* ── News Cards ──────────────────────────────────────────────── */
 .news-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -364,7 +356,6 @@
     vertical-align: middle;
 }
 
-/* ── Loading Skeletons ───────────────────────────────────────── */
 .skeleton-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -419,7 +410,6 @@
     }
 }
 
-/* ── Empty State ─────────────────────────────────────────────── */
 .empty-state {
     text-align: center;
     padding: 3rem 1rem;
@@ -444,7 +434,6 @@
     margin: 0 auto;
 }
 
-/* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .discover-page {
         padding: 1.5rem 1rem 3rem;

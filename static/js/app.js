@@ -1,21 +1,9 @@
-/* ============================================================
-   Meta Research – Main JavaScript
-   Search · Bookmarks · Keyboard Shortcuts · Enhanced Cards
-   Real-Time Sync Filtering · Citation Export
-   ============================================================ */
 
-// ---------------------------------------------------------------------------
-// Global State
-// ---------------------------------------------------------------------------
 let currentSource = 'all';
 let currentType = 'all';
 let currentDomain = 'all';
 let currentFetchedPapers = [];
 let currentBookmarkedIds = new Set();
-
-// ---------------------------------------------------------------------------
-// Navbar scroll effect
-// ---------------------------------------------------------------------------
 (function initNavbar() {
     const navbar = document.getElementById('navbar');
     if (!navbar) return;
@@ -23,14 +11,9 @@ let currentBookmarkedIds = new Set();
         navbar.classList.toggle('scrolled', window.scrollY > 30);
     });
 })();
-
-// ---------------------------------------------------------------------------
-// Keyboard Shortcuts:  Ctrl+K → focus search,  / → open filters (focus first)
-// ---------------------------------------------------------------------------
 (function initKeyboardShortcuts() {
     const input = document.getElementById('searchInput');
     if (!input) return;
-
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
@@ -42,12 +25,7 @@ let currentBookmarkedIds = new Set();
         }
     });
 })();
-
-// ---------------------------------------------------------------------------
-// Sidebar & Filtering Setup (Real-Time)
-// ---------------------------------------------------------------------------
 function attachRealTimeListeners() {
-    // Content-type tabs
     document.querySelectorAll('.type-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
@@ -56,8 +34,6 @@ function attachRealTimeListeners() {
             renderPapers();
         });
     });
-
-    // Source filter chips
     document.querySelectorAll('.source-chip').forEach(chip => {
         chip.addEventListener('click', () => {
             document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active'));
@@ -66,14 +42,10 @@ function attachRealTimeListeners() {
             renderPapers();
         });
     });
-
-    // Advanced Checkboxes
     ['filterPeerReviewed', 'filterOpenAccess', 'filterHasCode'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', renderPapers);
     });
-
-    // Domain list
     document.querySelectorAll('.domain-item').forEach(item => {
         item.addEventListener('click', () => {
             document.querySelectorAll('.domain-item').forEach(d => d.classList.remove('active'));
@@ -82,18 +54,14 @@ function attachRealTimeListeners() {
             renderPapers();
         });
     });
-
-    // Year slider
     const fromSlider = document.getElementById('yearSliderFrom');
     const toSlider = document.getElementById('yearSliderTo');
-
     function updateYearLabels() {
         let from = parseInt(fromSlider.value);
         let to = parseInt(toSlider.value);
         if (from > to) { fromSlider.value = to; from = to; }
         document.getElementById('yearFrom').textContent = from;
         document.getElementById('yearTo').textContent = to;
-
         const min = fromSlider.min;
         const max = fromSlider.max;
         const pctL = ((from - min) / (max - min)) * 100;
@@ -102,7 +70,6 @@ function attachRealTimeListeners() {
         toSlider.style.setProperty('--track-fill-left', pctL + '%');
         toSlider.style.setProperty('--track-fill-right', (100 - pctR) + '%');
     }
-
     if (fromSlider && toSlider) {
         fromSlider.addEventListener('input', () => { updateYearLabels(); renderPapers(); });
         toSlider.addEventListener('input', () => { updateYearLabels(); renderPapers(); });
@@ -110,34 +77,24 @@ function attachRealTimeListeners() {
     }
 }
 attachRealTimeListeners();
-
-
-// ---------------------------------------------------------------------------
-// Search init & Perform
-// ---------------------------------------------------------------------------
 (function initSearch() {
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
     if (!searchInput || !searchBtn) return;
-
     searchBtn.addEventListener('click', () => performSearch());
     searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') performSearch();
     });
 })();
-
 async function performSearch() {
     const query = document.getElementById('searchInput').value.trim();
     if (!query) return;
-
     const resultsSection = document.getElementById('resultsSection');
     const loadingContainer = document.getElementById('loadingContainer');
     const papersGrid = document.getElementById('papersGrid');
     const noResults = document.getElementById('noResults');
     const resultsQuery = document.getElementById('resultsQuery');
     const featuresSection = document.getElementById('featuresSection');
-
-    // UI transitions
     resultsSection.classList.add('active');
     loadingContainer.classList.add('active');
     papersGrid.classList.remove('active');
@@ -145,25 +102,18 @@ async function performSearch() {
     noResults.classList.remove('active');
     resultsQuery.textContent = query;
     if (featuresSection) featuresSection.classList.add('hidden');
-
-    // Scroll main results area, not window
     const resultsMain = document.querySelector('.results-main');
     if (resultsMain) resultsMain.scrollTop = 0;
-
     try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&source=all&max=20`);
         const data = await res.json();
         loadingContainer.classList.remove('active');
-
         if (!data.papers || data.papers.length === 0) {
             noResults.classList.add('active');
             document.getElementById('resultsCount').textContent = '0 papers found';
             return;
         }
-
         currentFetchedPapers = data.papers;
-
-        // Check bookmarks
         try {
             const meRes = await fetch('/api/me');
             const meData = await meRes.json();
@@ -172,65 +122,44 @@ async function performSearch() {
                 const bData = await bRes.json();
                 bData.bookmarks.forEach(b => currentBookmarkedIds.add(b.paper_id));
             }
-        } catch (_) { /* not logged in */ }
-
-        renderPapers(); // Renders dynamically based on active filters
-
+        } catch (_) {  }
+        renderPapers();
     } catch (err) {
         loadingContainer.classList.remove('active');
         loadingContainer.innerHTML = '<p class="error-text">Failed to fetch results. Please try again.</p>';
         console.error('Search error:', err);
     }
 }
-
-// ---------------------------------------------------------------------------
-// Real-Time Render Papers
-// ---------------------------------------------------------------------------
 function renderPapers() {
     const papersGrid = document.getElementById('papersGrid');
     const noResults = document.getElementById('noResults');
     const resultsCount = document.getElementById('resultsCount');
     if (!papersGrid || currentFetchedPapers.length === 0) return;
-
     const peerReq = document.getElementById('filterPeerReviewed')?.checked;
     const oaReq = document.getElementById('filterOpenAccess')?.checked;
     const codeReq = document.getElementById('filterHasCode')?.checked;
-
     const yearFrom = parseInt(document.getElementById('yearSliderFrom')?.value || '2000');
     const yearTo = parseInt(document.getElementById('yearSliderTo')?.value || '2025');
-
     const filtered = currentFetchedPapers.filter(p => {
-        // 1. Source check
         if (currentSource !== 'all') {
             const src = (p.source || '').toLowerCase().replace(/[^a-z]/g, '');
             const target = currentSource.toLowerCase().replace(/[^a-z]/g, '');
             if (src !== target && !(target === 'semanticscholar' && src.includes('semantic'))) return false;
         }
-
-        // 2. Type Check (loose mock logic)
         if (currentType === 'code' && !p.abstract_url) return false;
-        if (currentType === 'datasets' && !p.pdf_url) return false; // mock
-
-        // 3. Checkboxes
+        if (currentType === 'datasets' && !p.pdf_url) return false;
         if (oaReq && (!p.pdf_url || p.pdf_url.length === 0)) return false;
-        // Peer reviewed and Has code are often missing in basic search APIs, so we simulate strict checks if required
         if (codeReq && !p.abstract_url) return false;
-
-        // 4. Domain check (mock, since we just have title/summary)
         if (currentDomain !== 'all') {
             const text = (p.title + ' ' + (p.summary || '')).toLowerCase();
             const words = currentDomain.replace('-', ' ');
-            if (!text.includes(words)) return false; // basic keyword match
+            if (!text.includes(words)) return false;
         }
-
-        // 5. Year check
         let py = parseInt((p.published || '').substring(0, 4));
-        if (isNaN(py)) py = yearFrom; // If unknown date, let it pass or fail? let it pass.
+        if (isNaN(py)) py = yearFrom;
         if (py > 0 && (py < yearFrom || py > yearTo)) return false;
-
         return true;
     });
-
     if (filtered.length === 0) {
         papersGrid.classList.remove('active');
         noResults.classList.add('active');
@@ -244,20 +173,14 @@ function renderPapers() {
             .join('');
     }
 }
-
-// ---------------------------------------------------------------------------
-// Create Paper Card — enhanced with tags, citation count, action buttons
-// ---------------------------------------------------------------------------
 function createPaperCard(paper, isBookmarked) {
     const pubDate = paper.published || '';
     const sourceName = paper.source_name || paper.source || '';
     const hasPdf = paper.pdf_url && paper.pdf_url.length > 0;
     const hasAbstract = paper.abstract_url && paper.abstract_url.length > 0;
-
     const rawTags = paper.keywords || [];
     const tags = rawTags.slice(0, 4)
         .map(t => `<span class="paper-tag">${escapeHtml(t)}</span>`).join('');
-
     const citations = paper.citations
         ? `<span class="citations-badge">
                <svg class="citations-icon" viewBox="0 0 20 20" fill="currentColor">
@@ -266,9 +189,7 @@ function createPaperCard(paper, isBookmarked) {
                ${Number(paper.citations).toLocaleString()} Citations
            </span>`
         : '';
-
     const sourceClass = `source-badge source-${(paper.source || 'default').toLowerCase().replace(/[^a-z]/g, '')}`;
-
     return `
     <article class="paper-card${isBookmarked ? ' bookmarked' : ''}" data-paper-id="${escapeAttr(paper.id)}">
         <div class="paper-top-row">
@@ -286,17 +207,13 @@ function createPaperCard(paper, isBookmarked) {
                 </button>
             </div>
         </div>
-
         <h3 class="paper-title">${escapeHtml(paper.title)}</h3>
         <p class="paper-authors">${escapeHtml(paper.authors || 'Unknown authors')}</p>
-
         <p class="paper-summary" id="summary-${escapeAttr(paper.id)}">${escapeHtml(paper.summary)}</p>
         ${paper.full_summary && paper.full_summary.length > 500
             ? `<button class="expand-btn" onclick="toggleSummary('${escapeAttr(paper.id)}', this, '${escapeAttr(paper.full_summary)}')">Show more ↓</button>`
             : ''}
-
         ${tags ? `<div class="paper-tags">${tags}</div>` : ''}
-
         <div class="paper-footer">
             <div class="paper-actions">
                 <a href="/paper/${encodeURIComponent(paper.id)}" class="btn btn-ai-summary">
@@ -348,12 +265,7 @@ function createPaperCard(paper, isBookmarked) {
         </div>
     </article>`;
 }
-
-// ---------------------------------------------------------------------------
-// Bookmark toggle
-// ---------------------------------------------------------------------------
 async function toggleBookmark(btn, paper) {
-    // ... [Same logic as before]
     try {
         const meRes = await fetch('/api/me');
         const meData = await meRes.json();
@@ -366,9 +278,7 @@ async function toggleBookmark(btn, paper) {
         alert('Please login to bookmark papers.');
         return;
     }
-
     const isActive = btn.classList.contains('active');
-
     if (isActive) {
         try {
             const checkRes = await fetch(`/api/bookmarks/check/${encodeURIComponent(paper.id)}`);
@@ -411,10 +321,6 @@ async function toggleBookmark(btn, paper) {
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// Expand / collapse summary
-// ---------------------------------------------------------------------------
 function toggleSummary(paperId, btn, fullSummary) {
     const summaryEl = document.getElementById('summary-' + paperId);
     if (!summaryEl) return;
@@ -428,19 +334,16 @@ function toggleSummary(paperId, btn, fullSummary) {
         btn.textContent = 'Show less ↑';
     }
 }
-
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
-
 function escapeAttr(text) {
     if (!text) return '';
     return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-
 (function initFlash() {
     document.querySelectorAll('.flash-msg').forEach(msg => {
         setTimeout(() => {
@@ -449,21 +352,15 @@ function escapeAttr(text) {
         }, 5000);
     });
 })();
-
-// ---------------------------------------------------------------------------
-// Citation Export — Cite dropdown + clipboard copy + toast
-// ---------------------------------------------------------------------------
 function toggleCiteDropdown(e) {
     e.stopPropagation();
     const wrapper = e.currentTarget.closest('.cite-dropdown-wrapper');
     const dropdown = wrapper.querySelector('.cite-dropdown');
-    // Close all other open dropdowns first
     document.querySelectorAll('.cite-dropdown.open').forEach(d => {
         if (d !== dropdown) d.classList.remove('open');
     });
     dropdown.classList.toggle('open');
 }
-
 async function copyCitation(btn, format) {
     const paper = JSON.parse(btn.dataset.paper);
     try {
@@ -483,10 +380,8 @@ async function copyCitation(btn, format) {
         console.error('Citation error:', err);
         showToast('Failed to copy citation', true);
     }
-    // Close dropdown
     btn.closest('.cite-dropdown').classList.remove('open');
 }
-
 function showToast(message, isError = false) {
     const existing = document.querySelector('.toast-notification');
     if (existing) existing.remove();
@@ -500,8 +395,6 @@ function showToast(message, isError = false) {
         setTimeout(() => toast.remove(), 300);
     }, 2500);
 }
-
-// Close cite dropdowns when clicking outside
 document.addEventListener('click', () => {
     document.querySelectorAll('.cite-dropdown.open').forEach(d => d.classList.remove('open'));
 });

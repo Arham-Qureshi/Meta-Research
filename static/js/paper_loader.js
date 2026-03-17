@@ -1,14 +1,9 @@
-/* ═══════════════════════════════════════════════════════════════
-   paper_loader.js  –  Loads paper data and populates the info panel
-   ═══════════════════════════════════════════════════════════════ */
 
 (function () {
     'use strict';
-
     document.addEventListener('DOMContentLoaded', function () {
         loadPaperData();
     });
-
     function loadPaperData() {
         var paperId = window.__PAPER_ID__;
         var infoPanel = document.getElementById('paperInfoPanel');
@@ -16,18 +11,14 @@
         var infoContent = document.getElementById('paperInfoContent');
         var detailsEl = document.getElementById('paperDetails');
         var tabsEl = document.getElementById('paperTabs');
-
         if (!paperId || !infoPanel) return;
-
         fetch('/api/search?q=' + encodeURIComponent(paperId) + '&source=all&max=5')
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var paper = null;
-
                 if (data.papers && data.papers.length > 0) {
                     paper = data.papers.find(function (p) { return p.id === paperId; }) || data.papers[0];
                 }
-
                 if (!paper) {
                     if (loadingEl) {
                         loadingEl.innerHTML =
@@ -38,15 +29,9 @@
                     }
                     return;
                 }
-
-                /* Set global paper data for chat.js */
                 window.__PAPER_DATA__ = paper;
-
-                /* Hide loading, show tabs */
                 if (loadingEl) loadingEl.style.display = 'none';
                 if (tabsEl) tabsEl.style.display = 'flex';
-
-                /* Build info content (source badge + title) */
                 if (infoContent) {
                     infoContent.innerHTML =
                         '<span class="paper-info-badge">' +
@@ -56,12 +41,9 @@
                         '<p class="paper-info-authors">' + escapeH(paper.authors || 'Unknown authors') + '</p>' +
                         '<p class="paper-info-date">' + (paper.published ? 'Published: ' + escapeH(paper.published) : '') + '</p>';
                 }
-
-                /* Build details tab content */
                 var categories = (paper.categories || [])
                     .map(function (c) { return '<span class="paper-info-cat-chip">' + escapeH(c) + '</span>'; })
                     .join('');
-
                 if (detailsEl) {
                     detailsEl.innerHTML =
                         '<h4 class="paper-info-section-title">Abstract</h4>' +
@@ -73,8 +55,6 @@
                         '<button id="summarizeBtn" class="btn btn-summarize"><span>📝</span> Full Summary & Use Cases</button>' +
                         '</div>';
                 }
-
-                /* Re-initialize chat.js now that __PAPER_DATA__ is set */
                 if (typeof window.__initChatAfterLoad === 'function') {
                     window.__initChatAfterLoad();
                 }
@@ -90,7 +70,6 @@
                 }
             });
     }
-
     function escapeH(text) {
         if (!text) return '';
         var d = document.createElement('div');
