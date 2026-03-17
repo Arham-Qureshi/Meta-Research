@@ -1,13 +1,5 @@
-"""
-services/providers/openalex.py — OpenAlex search provider.
-
-Inherits BaseAPIProvider.  Uses the shared reconstruct_abstract()
-from utils.py instead of duplicating it.
-"""
-
 from services.providers.base import BaseAPIProvider
 from utils import reconstruct_abstract
-
 
 class OpenAlexProvider(BaseAPIProvider):
     NAME = 'openalex'
@@ -46,13 +38,11 @@ class OpenAlexProvider(BaseAPIProvider):
 
         published_date = (item.get('publication_date', '') or '')[:10]
 
-        # PDF URL
         pdf_url = ''
         oa_info = item.get('open_access', {})
         if oa_info.get('oa_url'):
             pdf_url = oa_info['oa_url']
 
-        # Landing page
         primary_loc = item.get('primary_location', {}) or {}
         landing_url = primary_loc.get('landing_page_url', '')
         doi_raw = item.get('doi', '') or ''

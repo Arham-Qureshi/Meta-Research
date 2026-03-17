@@ -1,10 +1,3 @@
-"""
-services/chat.py — ChatService for AI-powered paper interactions.
-
-Inherits BaseService.  Encapsulates Groq + Gemini AI logic.
-All AI interactions go through this single service.
-"""
-
 import os
 from services.base import BaseService
 
@@ -28,9 +21,7 @@ try:
 except ImportError:
     SUMY_AVAILABLE = False
 
-
 class ChatService(BaseService):
-    """AI chat and summarisation service for academic papers."""
 
     GEMINI_MODEL = 'gemini-2.0-flash'
     GROQ_MODEL = 'llama-3.3-70b-versatile'
@@ -44,10 +35,7 @@ class ChatService(BaseService):
         groq_key = os.environ.get('GROQ_API_KEY', '')
         self._groq_client = Groq(api_key=groq_key) if GROQ_AVAILABLE and groq_key else None
 
-    # ── Public API ───────────────────────────────────────────
-
     def chat(self, paper: dict, user_message: str) -> dict:
-        """Chat with a paper using Groq."""
         if not GROQ_AVAILABLE:
             return self._error('The groq package is not installed. Run: pip install groq')
         if self._groq_client is None:
@@ -78,7 +66,6 @@ class ChatService(BaseService):
             return {'reply': '', 'error': f'AI request failed: {e}'}
 
     def summarize(self, paper: dict) -> dict:
-        """Generate a comprehensive paper summary using Groq."""
         if not GROQ_AVAILABLE:
             return self._error('The groq package is not installed. Run: pip install groq')
         if self._groq_client is None:
@@ -107,10 +94,7 @@ class ChatService(BaseService):
         except Exception as e:
             return {'summary': '', 'error': f'AI request failed: {e}'}
 
-    # ── Reusable internals ───────────────────────────────────
-
     def _build_context(self, paper: dict) -> str:
-        """Build a structured context string from paper metadata."""
         parts = []
         if paper.get('title'):
             parts.append(f"Title: {paper['title']}")
@@ -131,7 +115,6 @@ class ChatService(BaseService):
 
     @staticmethod
     def _presummarize(text: str, sentence_count: int = 6) -> str:
-        """Shorten long abstracts locally before sending to AI."""
         if not SUMY_AVAILABLE:
             return text
         if text.count('.') <= sentence_count + 1:
@@ -144,6 +127,4 @@ class ChatService(BaseService):
         except Exception:
             return text
 
-
-# Module-level singleton
 chat_service = ChatService()

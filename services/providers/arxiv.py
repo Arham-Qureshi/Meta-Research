@@ -1,12 +1,5 @@
-"""
-services/providers/arxiv.py — ArXiv search provider.
-
-Inherits BaseAPIProvider.  Parses Atom XML from the ArXiv API.
-"""
-
 from bs4 import BeautifulSoup
 from services.providers.base import BaseAPIProvider
-
 
 class ArxivProvider(BaseAPIProvider):
     NAME = 'arxiv'

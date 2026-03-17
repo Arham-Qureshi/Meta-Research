@@ -1,27 +1,15 @@
-"""
-services/news.py — NewsService for science news and trending papers.
-
-Inherits BaseService for shared HTTP.  Composes GNews + NewsData.io
-with in-memory TTL caching and deduplication.
-
-Also reuses the OpenAlex search provider pattern for trending papers
-via reconstruct_abstract from utils.py.
-"""
-
 import os
 import time
 from datetime import datetime, timedelta
 from services.base import BaseService
 from utils import reconstruct_abstract
 
-
 class NewsService(BaseService):
-    """Dual-API news aggregator with in-memory caching."""
 
     GNEWS_URL = 'https://gnews.io/api/v4/search'
     NEWSDATA_URL = 'https://newsdata.io/api/1/news'
     OPENALEX_URL = 'https://api.openalex.org/works'
-    CACHE_TTL = 5 * 60 * 60  # 5 hours
+    CACHE_TTL = 5 * 60 * 60
 
     def __init__(self):
         self._gnews_key = os.environ.get('GNEWS_API_KEY', '')
@@ -31,10 +19,7 @@ class NewsService(BaseService):
             'trending': {'data': [], 'ts': 0},
         }
 
-    # ── Public API ───────────────────────────────────────────
-
     def get_news(self, query: str | None = None, force_refresh: bool = False) -> list[dict]:
-        """Return recent science news articles, cached for 5 hours."""
         if not force_refresh and self._is_fresh('news'):
             return self._cache['news']['data']
 
@@ -47,7 +32,6 @@ class NewsService(BaseService):
         return merged
 
     def get_trending(self, max_results: int = 12) -> list[dict]:
-        """Return trending papers from OpenAlex, cached for 5 hours."""
         if self._is_fresh('trending'):
             return self._cache['trending']['data']
 
@@ -73,8 +57,6 @@ class NewsService(BaseService):
         papers = [self._normalize_trending(item) for item in data.get('results', [])]
         self._cache['trending'] = {'data': papers, 'ts': time.time()}
         return papers
-
-    # ── Private helpers ──────────────────────────────────────
 
     def _is_fresh(self, key: str) -> bool:
         return (time.time() - self._cache[key]['ts']) < self.CACHE_TTL
@@ -128,7 +110,6 @@ class NewsService(BaseService):
 
     @staticmethod
     def _merge_articles(a_list: list[dict], b_list: list[dict]) -> list[dict]:
-        """Merge + deduplicate by title similarity."""
         seen = set()
         merged = []
         for article in a_list + b_list:
@@ -140,7 +121,6 @@ class NewsService(BaseService):
         return merged
 
     def _normalize_trending(self, item: dict) -> dict:
-        """Normalise an OpenAlex work into a trending paper dict."""
         title = item.get('title', 'Untitled') or 'Untitled'
         authorships = item.get('authorships', [])
         authors = [
@@ -182,6 +162,4 @@ class NewsService(BaseService):
             'source_name': 'OpenAlex',
         }
 
-
-# Module-level singleton
 news_service = NewsService()

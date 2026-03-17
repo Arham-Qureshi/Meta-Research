@@ -15,7 +15,6 @@ import logging
 
 log = logging.getLogger(__name__)
 
-
 class BaseService:
     """Abstract foundation for all backend services."""
 
@@ -23,8 +22,6 @@ class BaseService:
     HEADERS = {
         'User-Agent': 'MetaResearch/1.0 (Academic Research Tool)',
     }
-
-    # ── HTTP helpers ─────────────────────────────────────────
 
     def _get(self, url: str, params: dict | None = None,
              headers: dict | None = None, timeout: int | None = None) -> requests.Response | None:
@@ -64,8 +61,6 @@ class BaseService:
             log.warning('POST %s failed: %s', url, exc)
             return None
 
-    # ── JSON helpers ─────────────────────────────────────────
-
     @staticmethod
     def _safe_json(response: requests.Response | None) -> dict:
         """Parse JSON from a response, returning {} on any failure."""
@@ -75,8 +70,6 @@ class BaseService:
             return response.json()
         except (ValueError, AttributeError):
             return {}
-
-    # ── Error response builder ───────────────────────────────
 
     @staticmethod
     def _error(message: str) -> dict:

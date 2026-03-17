@@ -1,12 +1,5 @@
-"""
-services/providers/crossref.py — Crossref search provider.
-
-Inherits BaseAPIProvider.  Uses the Crossref REST API.
-"""
-
 import re
 from services.providers.base import BaseAPIProvider
-
 
 class CrossrefProvider(BaseAPIProvider):
     NAME = 'crossref'
@@ -68,8 +61,6 @@ class CrossrefProvider(BaseAPIProvider):
             'citations': citation_count,
             'journal': journal,
         }
-
-    # ── Private helpers (reusable within this provider) ──────
 
     @staticmethod
     def _parse_authors(raw_authors: list) -> list[str]:

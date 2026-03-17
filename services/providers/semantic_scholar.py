@@ -1,11 +1,4 @@
-"""
-services/providers/semantic_scholar.py — Semantic Scholar search provider.
-
-Inherits BaseAPIProvider.  Uses the Graph API v1.
-"""
-
 from services.providers.base import BaseAPIProvider
-
 
 class SemanticScholarProvider(BaseAPIProvider):
     NAME = 'semantic_scholar'
