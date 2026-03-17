@@ -1,50 +1,34 @@
-/* ═══════════════════════════════════════════════════════════════
-   citation_graph.js — Cytoscape.js Citation Network Visualiser
-   Supports: Standalone (/citation-graph) & Embedded (paper_chat tab)
-   Layout:  fCoSE — organic, force-directed, connected-papers style
-   Colors:  Purple=center, Green=citation, Pink=reference, Blue=related
-   ═══════════════════════════════════════════════════════════════ */
 
 (function () {
     'use strict';
-
-    /* ── State ────────────────────────────────────────────────── */
     var cy = null;
     var tooltipEl = null;
     var _cinemaMode = false;
-    var _allNodes = [];            /* cached for paper list */
-    var _activeListId = null;      /* currently selected list item */
+    var _allNodes = [];            
+    var _activeListId = null;      
     var _filterState = { citation: true, reference: true, related: true };
-
-    /* ── Type → Color Mapping ────────────────────────────────── */
     var TYPE_COLORS = {
         center:    '#b28cfa',
         citation:  '#4ade80',
         reference: '#f472b6',
         related:   '#60a5fa'
     };
-
     function typeToColor(type) {
         return TYPE_COLORS[type] || TYPE_COLORS.citation;
     }
-
     function logSize(citations) {
         return Math.min(20 + Math.log2(1 + (citations || 0)) * 4, 65);
     }
-
-    /* ── Utility ─────────────────────────────────────────────── */
     function truncate(str, len) {
         if (!str) return '';
         return str.length > len ? str.substring(0, len) + '…' : str;
     }
-
     function esc(str) {
         if (!str) return '';
         var d = document.createElement('div');
         d.textContent = str;
         return d.innerHTML;
     }
-
     function typeEmoji(type) {
         if (type === 'center') return '🟣 This Paper';
         if (type === 'citation') return '🟢 Cites This';
@@ -52,7 +36,6 @@
         if (type === 'related') return '🔵 Related';
         return '';
     }
-
     function showEmpty(emptyEl, loadingEl, msg) {
         if (loadingEl) loadingEl.style.display = 'none';
         if (emptyEl) {
@@ -61,10 +44,6 @@
             if (pEl) pEl.textContent = msg;
         }
     }
-
-    /* ════════════════════════════════════════════════════════════
-       TYPING PLACEHOLDER ANIMATION
-       ════════════════════════════════════════════════════════════ */
     var _typingPhrases = [
         'Search for "Attention Is All You Need"...',
         'Try a DOI: 10.1038/s41586-021-03819-2',
@@ -74,29 +53,24 @@
         'Try "Reinforcement Learning from Human Feedback"...'
     ];
     var _typingTimer = null;
-
     function startTypingAnimation(input) {
         if (!input) return;
         var phraseIdx = 0;
         var charIdx = 0;
         var isDeleting = false;
         var pauseMs = 80;
-
         function tick() {
-            /* Stop when user focuses */
             if (document.activeElement === input && input.value.length > 0) {
                 input.placeholder = '';
                 return;
             }
-
             var phrase = _typingPhrases[phraseIdx];
-
             if (!isDeleting) {
                 charIdx++;
                 input.placeholder = phrase.substring(0, charIdx);
                 if (charIdx === phrase.length) {
                     isDeleting = true;
-                    pauseMs = 2000; /* pause before deleting */
+                    pauseMs = 2000; 
                 } else {
                     pauseMs = 55 + Math.random() * 40;
                 }
@@ -111,11 +85,8 @@
                     pauseMs = 30;
                 }
             }
-
             _typingTimer = setTimeout(tick, pauseMs);
         }
-
-        /* Reset animation when user leaves empty input */
         input.addEventListener('blur', function () {
             if (!input.value.trim()) {
                 if (_typingTimer) clearTimeout(_typingTimer);
@@ -124,32 +95,21 @@
                 tick();
             }
         });
-
         input.addEventListener('focus', function () {
             input.placeholder = '';
         });
-
         tick();
     }
-
-    /* ════════════════════════════════════════════════════════════
-       STANDALONE PAGE  (/citation-graph)
-       ════════════════════════════════════════════════════════════ */
     function getSelectedSource() {
         var btn = document.querySelector('.cg-source-btn.active');
         return btn ? btn.getAttribute('data-source') : 'semantic_scholar';
     }
-
     function initStandalonePage() {
         var searchInput = document.getElementById('cgSearchInput');
         var searchBtn = document.getElementById('cgSearchBtn');
         var dropdown = document.getElementById('cgPaperResults');
         if (!searchInput) return;
-
-        /* Start typing animation */
         startTypingAnimation(searchInput);
-
-        /* Source toggle */
         document.querySelectorAll('.cg-source-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 document.querySelectorAll('.cg-source-btn').forEach(function (b) {
@@ -160,16 +120,13 @@
                 dropdown.classList.remove('active');
             });
         });
-
         function doSearch() {
             var q = searchInput.value.trim();
             if (!q) return;
             var source = getSelectedSource();
             var label = source === 'openalex' ? 'OpenAlex' : 'Semantic Scholar';
-
             dropdown.innerHTML = '<div class="cg-paper-result" style="color:#888;text-align:center;">Searching ' + label + '...</div>';
             dropdown.classList.add('active');
-
             fetch('/api/search?q=' + encodeURIComponent(q) + '&source=' + source + '&max=15')
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
@@ -187,7 +144,6 @@
                             + '<span>📊 ' + Number(p.citations || 0).toLocaleString() + ' citations</span>'
                             + '</div></div>';
                     }).join('');
-
                     dropdown.querySelectorAll('.cg-paper-result[data-paper-id]').forEach(function (el) {
                         el.addEventListener('click', function () {
                             var paperId = el.getAttribute('data-paper-id');
@@ -203,20 +159,16 @@
                     dropdown.innerHTML = '<div class="cg-paper-result" style="color:#f87171;text-align:center;">Search failed. Try again.</div>';
                 });
         }
-
         searchBtn.addEventListener('click', doSearch);
         searchInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
         });
-
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.cg-search-area')) {
                 dropdown.classList.remove('active');
             }
         });
     }
-
-    /* ── Load Graph ──────────────────────────────────────────── */
     function loadGraph(paperId, paperData) {
         var workspace = document.getElementById('cgWorkspace');
         var container = document.getElementById('cgGraphCanvas');
@@ -225,14 +177,11 @@
         var sourceBadge = document.getElementById('cgSourceBadge');
         var fallbackBadge = document.getElementById('cgFallbackBadge');
         tooltipEl = document.getElementById('cgGraphTooltip');
-
         workspace.style.display = 'grid';
         if (loadingEl) loadingEl.style.display = 'flex';
         if (emptyEl) emptyEl.style.display = 'none';
         container.style.display = 'block';
-
         if (cy) { cy.destroy(); cy = null; }
-
         var source = getSelectedSource();
         fetch('/api/paper/graph?id=' + encodeURIComponent(paperId) + '&source=' + source + '&max_citations=20&max_references=20')
             .then(function (r) {
@@ -243,7 +192,6 @@
             })
             .then(function (data) {
                 if (loadingEl) loadingEl.style.display = 'none';
-
                 if (data.error || !data.nodes || data.nodes.length === 0) {
                     if (emptyEl) {
                         emptyEl.style.display = 'flex';
@@ -260,11 +208,8 @@
                     }
                     return;
                 }
-
-                /* Source & fallback badges */
                 if (sourceBadge) sourceBadge.textContent = data.source === 'openalex' ? 'OpenAlex' : 'Semantic Scholar';
                 if (fallbackBadge) fallbackBadge.style.display = data.fallback_used ? 'inline' : 'none';
-
                 _allNodes = data.nodes;
                 renderPaperList(data.nodes);
                 renderGraph(container, data, true);
@@ -280,29 +225,20 @@
                 console.error('[CitationGraph]', err);
             });
     }
-
-    /* ════════════════════════════════════════════════════════════
-       LEFT PANEL — Scrollable Papers List
-       ════════════════════════════════════════════════════════════ */
     function renderPaperList(nodes) {
         var listEl = document.getElementById('cgPaperList');
         if (!listEl) return;
-
-        /* Sort: center first, then by citations desc */
         var sorted = nodes.slice().sort(function (a, b) {
             if (a.type === 'center') return -1;
             if (b.type === 'center') return 1;
             return (b.citations || 0) - (a.citations || 0);
         });
-
         listEl.innerHTML = '';
         sorted.forEach(function (n) {
             var item = document.createElement('div');
             item.className = 'cg-list-item' + (n.type === 'center' ? ' pinned' : '');
             item.setAttribute('data-node-id', n.id);
-
             var firstAuthor = (n.authors || 'Unknown').split(',')[0].trim();
-
             item.innerHTML =
                 '<span class="cg-list-dot dot-' + esc(n.type) + '"></span>'
                 + '<div class="cg-list-info">'
@@ -312,8 +248,6 @@
                 + '<span>' + (n.year || '—') + '</span>'
                 + '<span>📊 ' + Number(n.citations || 0).toLocaleString() + '</span>'
                 + '</div></div>';
-
-            /* Cross-highlight: list → graph */
             item.addEventListener('mouseenter', function () {
                 highlightNodeById(n.id);
             });
@@ -323,11 +257,9 @@
             item.addEventListener('click', function () {
                 selectNode(n.id);
             });
-
             listEl.appendChild(item);
         });
     }
-
     function highlightListItem(nodeId) {
         var listEl = document.getElementById('cgPaperList');
         if (!listEl) return;
@@ -340,7 +272,6 @@
             target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
-
     function clearListHighlight() {
         var listEl = document.getElementById('cgPaperList');
         if (!listEl) return;
@@ -348,10 +279,6 @@
             item.classList.remove('active');
         });
     }
-
-    /* ════════════════════════════════════════════════════════════
-       RIGHT PANEL — Paper Details (click-driven)
-       ════════════════════════════════════════════════════════════ */
     function populateRightPanel(nodeData) {
         var el = document.getElementById('cgHoverContent');
         if (!el) return;
@@ -360,7 +287,6 @@
             : nodeData.type === 'citation' ? '🟢 Cites This Paper'
                 : nodeData.type === 'related' ? '🔵 Related Paper'
                     : '🔴 Referenced By This Paper';
-
         var conceptsHtml = '';
         var concepts = nodeData.concepts || [];
         if (concepts.length > 0) {
@@ -370,24 +296,20 @@
                 }).join('')
                 + '</div>';
         }
-
         var summary = nodeData.summary || '';
         var abstractHtml = summary
             ? '<div class="cg-detail-abstract">' + esc(summary).substring(0, 500) + (summary.length > 500 ? '...' : '') + '</div>'
             : '';
-
         var linkHtml = '';
         if (nodeData.doi) {
             linkHtml = '<a class="cg-detail-link" href="https://doi.org/' + esc(nodeData.doi) + '" target="_blank" rel="noopener">↗ View on DOI</a>';
         } else if (nodeData.id) {
-            /* Try to provide a meaningful link */
             if (String(nodeData.id).startsWith('https://openalex.org/')) {
                 linkHtml = '<a class="cg-detail-link" href="' + esc(nodeData.id) + '" target="_blank" rel="noopener">↗ View on OpenAlex</a>';
             } else {
                 linkHtml = '<a class="cg-detail-link" href="https://www.semanticscholar.org/paper/' + esc(nodeData.id) + '" target="_blank" rel="noopener">↗ View on Semantic Scholar</a>';
             }
         }
-
         el.innerHTML =
             '<span class="cg-detail-type ' + typeClass + '">' + typeLabel + '</span>'
             + '<div class="cg-detail-title">' + esc(nodeData.fullLabel || nodeData.label || '') + '</div>'
@@ -399,15 +321,10 @@
             + abstractHtml
             + linkHtml;
     }
-
     function clearRightPanel() {
         var el = document.getElementById('cgHoverContent');
         if (el) el.innerHTML = '<p class="cg-panel-empty">Click a node to see details.</p>';
     }
-
-    /* ════════════════════════════════════════════════════════════
-       GRAPH INTERACTION HELPERS
-       ════════════════════════════════════════════════════════════ */
     function highlightNodeById(nodeId) {
         if (!cy) return;
         cy.elements().removeClass('faded highlighted');
@@ -417,23 +334,18 @@
         cy.elements().not(connected).addClass('faded');
         connected.addClass('highlighted');
     }
-
     function unhighlightAll() {
         if (!cy) return;
         cy.elements().removeClass('faded highlighted');
         cy.elements().animate({ style: { opacity: 1 } }, { duration: 150 });
     }
-
     function selectNode(nodeId) {
         if (!cy) return;
         var node = cy.getElementById(nodeId);
         if (node.length === 0) return;
-
         _activeListId = nodeId;
         highlightNodeById(nodeId);
         highlightListItem(nodeId);
-
-        /* Find the node data from _allNodes */
         var nodeData = null;
         for (var i = 0; i < _allNodes.length; i++) {
             if (_allNodes[i].id === nodeId) {
@@ -457,29 +369,18 @@
         } else {
             populateRightPanel(node.data());
         }
-
-        /* Animate camera to node */
         cy.animate({
             center: { eles: node },
             duration: 400,
             easing: 'ease-out-cubic'
         });
     }
-
-    /* ════════════════════════════════════════════════════════════
-       RENDER CYTOSCAPE GRAPH
-       Layout: fCoSE — organic, physics-based, connected-papers style
-       ════════════════════════════════════════════════════════════ */
     function renderGraph(container, data, isStandalone) {
         var elements = [];
-
         data.nodes.forEach(function (n) {
             var size = n.type === 'center' ? 60 : logSize(n.citations);
-
-            /* Label as 'Author, Year' like Connected Papers */
             var firstAuthor = (n.authors || 'Unknown').split(',')[0].trim();
             var nodeLabel = firstAuthor + (n.year ? ', ' + n.year : '');
-
             elements.push({
                 group: 'nodes',
                 data: {
@@ -498,13 +399,11 @@
                 }
             });
         });
-
         data.edges.forEach(function (e) {
             var srcNode = data.nodes.find(function (n) { return n.id === e.source; });
             var edgeType = 'citation';
             if (srcNode) {
                 if (srcNode.type === 'center') {
-                    /* center → reference OR center → related */
                     var tgtNode = data.nodes.find(function (n) { return n.id === e.target; });
                     edgeType = (tgtNode && tgtNode.type === 'related') ? 'related' : 'reference';
                 }
@@ -519,10 +418,7 @@
                 }
             });
         });
-
-        /* Determine layout — use fcose if available, fallback to cose */
         var layoutName = (typeof cytoscape !== 'undefined' && cytoscape('layout', 'fcose')) ? 'fcose' : 'cose';
-
         var layoutConfig;
         if (layoutName === 'fcose') {
             layoutConfig = {
@@ -560,7 +456,6 @@
                 componentSpacing: 80
             };
         }
-
         cy = cytoscape({
             container: container,
             elements: elements,
@@ -623,12 +518,9 @@
                 { selector: '.faded', style: { 'opacity': 0.12 } },
                 { selector: '.highlighted', style: { 'opacity': 1 } }
             ],
-
             layout: layoutConfig,
             minZoom: 0.2, maxZoom: 3, wheelSensitivity: 0.3
         });
-
-        /* ── Smooth fade-in after layout ─────────────────────── */
         cy.ready(function () {
             var delay = 0;
             ['center', 'citation', 'reference', 'related'].forEach(function (type) {
@@ -642,20 +534,15 @@
                 cy.edges().animate({ style: { opacity: 1 } }, { duration: 300, easing: 'ease-out' });
             }, delay);
         });
-
-        /* ── Tooltip on hover ────────────────────────────────── */
         cy.on('mouseover', 'node', function (e) {
             var d = e.target.data();
             showTooltip(e.renderedPosition, d, container);
-            /* Cross-highlight: graph → list */
             if (isStandalone) highlightListItem(d.id);
         });
         cy.on('mouseout', 'node', function () {
             hideTooltip();
             if (isStandalone && !_activeListId) clearListHighlight();
         });
-
-        /* ── Select on tap (click) ───────────────────────────── */
         cy.on('tap', 'node', function (e) {
             var node = e.target;
             selectNode(node.id());
@@ -671,33 +558,22 @@
                 }
             }
         });
-
         bindControls(isStandalone);
         bindLegendFilters();
     }
-
-    /* ════════════════════════════════════════════════════════════
-       LEGEND FILTERING — Toggle node types on/off
-       ════════════════════════════════════════════════════════════ */
     function bindLegendFilters() {
         document.querySelectorAll('.cg-legend-item[data-filter]').forEach(function (item) {
             item.addEventListener('click', function () {
                 var type = item.getAttribute('data-filter');
                 if (!type) return;
-
-                /* Toggle state */
                 _filterState[type] = !_filterState[type];
                 item.classList.toggle('inactive', !_filterState[type]);
-
                 applyFilters();
             });
         });
     }
-
     function applyFilters() {
         if (!cy) return;
-
-        /* Toggle Cytoscape nodes + connected edges */
         ['citation', 'reference', 'related'].forEach(function (type) {
             var visible = _filterState[type];
             var nodes = cy.nodes('[type="' + type + '"]');
@@ -709,8 +585,6 @@
                 nodes.connectedEdges().style('display', 'none');
             }
         });
-
-        /* Also ensure edges between two visible nodes stay visible */
         cy.edges().forEach(function (edge) {
             var src = edge.source();
             var tgt = edge.target();
@@ -718,8 +592,6 @@
                 edge.style('display', 'element');
             }
         });
-
-        /* Toggle left-panel list items */
         var listEl = document.getElementById('cgPaperList');
         if (listEl) {
             listEl.querySelectorAll('.cg-list-item').forEach(function (item) {
@@ -736,10 +608,6 @@
             });
         }
     }
-
-    /* ════════════════════════════════════════════════════════════
-       TOOLTIP
-       ════════════════════════════════════════════════════════════ */
     function showTooltip(pos, data, container) {
         if (!tooltipEl) return;
         tooltipEl.querySelector('.graph-tooltip-title').textContent = data.fullLabel || data.label;
@@ -748,7 +616,6 @@
             '<span>📅 ' + (data.year || '—') + '</span>'
             + '<span>📊 ' + (data.citations || 0) + ' citations</span>'
             + '<span>' + typeEmoji(data.type) + '</span>';
-
         var rect = container.getBoundingClientRect();
         var left = pos.x + 15;
         var top = pos.y - 10;
@@ -758,28 +625,19 @@
         tooltipEl.style.top = top + 'px';
         tooltipEl.classList.add('visible');
     }
-
     function hideTooltip() {
         if (tooltipEl) tooltipEl.classList.remove('visible');
     }
-
-    /* ════════════════════════════════════════════════════════════
-       CONTROLS
-       ════════════════════════════════════════════════════════════ */
     function bindControls(isStandalone) {
         var pfx = isStandalone ? 'cg' : 'graph';
-
         var zoomIn = document.getElementById(pfx + 'ZoomIn') || document.getElementById('graphZoomIn');
         var zoomOut = document.getElementById(pfx + 'ZoomOut') || document.getElementById('graphZoomOut');
         var fit = document.getElementById(pfx + 'Fit') || document.getElementById('graphFit');
         var relayout = document.getElementById(pfx + 'Relayout') || document.getElementById('graphRelayout');
         var cinemaBtn = document.getElementById('cgCinemaBtn');
-
         if (zoomIn) zoomIn.onclick = function () { if (cy) cy.zoom(cy.zoom() * 1.3); };
         if (zoomOut) zoomOut.onclick = function () { if (cy) cy.zoom(cy.zoom() * 0.7); };
         if (fit) fit.onclick = function () { if (cy) cy.fit(null, 30); };
-
-        /* Re-layout with fcose */
         if (relayout) relayout.onclick = function () {
             if (!cy) return;
             var layoutName = (typeof cytoscape !== 'undefined' && cytoscape('layout', 'fcose')) ? 'fcose' : 'cose';
@@ -805,8 +663,6 @@
             }
             cy.layout(config).run();
         };
-
-        /* Cinema Mode toggle */
         if (cinemaBtn) cinemaBtn.onclick = function () {
             var workspace = document.getElementById('cgWorkspace');
             if (!workspace) return;
@@ -814,7 +670,6 @@
             workspace.classList.toggle('cinema-mode', _cinemaMode);
             cinemaBtn.classList.toggle('active', _cinemaMode);
             cinemaBtn.title = _cinemaMode ? 'Exit cinema mode' : 'Cinema mode';
-
             var resizeCount = 0;
             var resizeInterval = setInterval(function () {
                 if (cy) cy.resize();
@@ -829,10 +684,6 @@
             }, 25);
         };
     }
-
-    /* ════════════════════════════════════════════════════════════
-       STATS
-       ════════════════════════════════════════════════════════════ */
     function updateStats(data, isStandalone) {
         var citCount = 0, refCount = 0, relCount = 0;
         data.nodes.forEach(function (n) {
@@ -848,10 +699,6 @@
         if (refEl) refEl.textContent = refCount + ' referenced papers shown';
         if (relEl) relEl.textContent = relCount + ' related shown';
     }
-
-    /* ════════════════════════════════════════════════════════════
-       EMBEDDED MODE (paper_chat.html tab — lazy-loaded)
-       ════════════════════════════════════════════════════════════ */
     window.__initCitationGraph = function () {
         if (cy) return;
         var container = document.getElementById('graphCanvas');
@@ -859,12 +706,9 @@
         var emptyEl = document.getElementById('graphEmpty');
         tooltipEl = document.getElementById('graphTooltip');
         if (!container) return;
-
         var paperId = window.__PAPER_ID__;
         if (!paperId) { showEmpty(emptyEl, loadingEl, 'No paper ID available.'); return; }
-
         if (loadingEl) loadingEl.style.display = 'flex';
-
         fetch('/api/paper/graph?id=' + encodeURIComponent(paperId))
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -883,18 +727,11 @@
                 console.error('[CitationGraph]', err);
             });
     };
-
-    /* ════════════════════════════════════════════════════════════
-       INIT — detect mode
-       ════════════════════════════════════════════════════════════ */
     document.addEventListener('DOMContentLoaded', function () {
-        /* Standalone page */
         if (document.getElementById('cgPage')) {
             initStandalonePage();
             return;
         }
-
-        /* Embedded (paper_chat.html) — bind tab switching */
         document.querySelectorAll('.paper-tab').forEach(function (tab) {
             tab.addEventListener('click', function () {
                 document.querySelectorAll('.paper-tab').forEach(function (t) { t.classList.remove('active'); });

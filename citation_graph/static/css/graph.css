@@ -1,15 +1,10 @@
-/* ═══════════════════════════════════════════════════════════════
-   graph.css  –  Citation Network Graph (Cytoscape.js)
-   ═══════════════════════════════════════════════════════════════ */
 
-/* ── Graph Tab Toggle ────────────────────────────────────────── */
 .paper-tabs {
     display: flex;
     gap: 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     margin-bottom: 1.5rem;
 }
-
 .paper-tab {
     flex: 1;
     padding: 0.75rem 1rem;
@@ -26,35 +21,26 @@
     justify-content: center;
     gap: 0.4rem;
 }
-
 .paper-tab:hover {
     color: #aaa;
     background: rgba(255, 255, 255, 0.02);
 }
-
 .paper-tab.active {
     color: #a5b4fc;
     border-bottom-color: #818cf8;
 }
-
 .paper-tab-icon {
     font-size: 0.9rem;
 }
-
-/* ── Tab Content ─────────────────────────────────────────────── */
 .tab-content {
     display: none;
 }
-
 .tab-content.active {
     display: block;
 }
-
-/* ── Graph Container ─────────────────────────────────────────── */
 .graph-section {
     position: relative;
 }
-
 .graph-container {
     width: 100%;
     height: 480px;
@@ -64,13 +50,10 @@
     overflow: hidden;
     position: relative;
 }
-
 .graph-canvas {
     width: 100%;
     height: 100%;
 }
-
-/* ── Graph Toolbar ───────────────────────────────────────────── */
 .graph-toolbar {
     display: flex;
     align-items: center;
@@ -78,19 +61,16 @@
     padding: 0.6rem 0;
     margin-bottom: 0.6rem;
 }
-
 .graph-toolbar-left {
     display: flex;
     align-items: center;
     gap: 0.6rem;
 }
-
 .graph-toolbar-right {
     display: flex;
     align-items: center;
     gap: 0.4rem;
 }
-
 .graph-control-btn {
     width: 32px;
     height: 32px;
@@ -105,18 +85,15 @@
     justify-content: center;
     transition: all 0.2s ease;
 }
-
 .graph-control-btn:hover {
     background: rgba(99, 102, 241, 0.1);
     color: #a5b4fc;
     border-color: rgba(99, 102, 241, 0.2);
 }
-
 .graph-stats {
     display: flex;
     gap: 1rem;
 }
-
 .graph-stat {
     display: flex;
     align-items: center;
@@ -124,31 +101,24 @@
     font-size: 0.72rem;
     color: #777;
 }
-
 .graph-stat-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
 }
-
 .graph-stat-dot.dot-center {
     background: #b28cfa;
     box-shadow: 0 0 6px rgba(178, 140, 250, 0.5);
 }
-
 .graph-stat-dot.dot-citation {
     background: #34d399;
 }
-
 .graph-stat-dot.dot-reference {
     background: #f472b6;
 }
-
 .graph-stat-dot.dot-related {
     background: #60a5fa;
 }
-
-/* ── Node Tooltip ────────────────────────────────────────────── */
 .graph-tooltip {
     position: absolute;
     z-index: 100;
@@ -162,11 +132,9 @@
     transition: opacity 0.2s ease;
     backdrop-filter: blur(12px);
 }
-
 .graph-tooltip.visible {
     opacity: 1;
 }
-
 .graph-tooltip-title {
     font-size: 0.82rem;
     font-weight: 600;
@@ -174,27 +142,22 @@
     margin-bottom: 0.3rem;
     line-height: 1.35;
 }
-
 .graph-tooltip-authors {
     font-size: 0.72rem;
     color: #888;
     margin-bottom: 0.25rem;
 }
-
 .graph-tooltip-meta {
     display: flex;
     gap: 0.6rem;
     font-size: 0.68rem;
     color: #666;
 }
-
 .graph-tooltip-meta span {
     display: flex;
     align-items: center;
     gap: 0.2rem;
 }
-
-/* ── Loading State ───────────────────────────────────────────── */
 .graph-loading {
     display: flex;
     flex-direction: column;
@@ -204,7 +167,6 @@
     gap: 0.8rem;
     color: #888;
 }
-
 .graph-loading .loader-spinner {
     width: 28px;
     height: 28px;
@@ -213,12 +175,9 @@
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
-
 .graph-loading-text {
     font-size: 0.82rem;
 }
-
-/* ── Error/Empty State ───────────────────────────────────────── */
 .graph-empty {
     display: flex;
     flex-direction: column;
@@ -229,91 +188,70 @@
     text-align: center;
     padding: 2rem;
 }
-
 .graph-empty-icon {
     font-size: 2rem;
 }
-
 .graph-empty h4 {
     font-size: 0.95rem;
     color: #aaa;
     margin: 0;
 }
-
 .graph-empty p {
     font-size: 0.78rem;
     color: #666;
     max-width: 280px;
 }
-
-/* ── Responsive (Embedded Graph) ────────────────────────────── */
 @media (max-width: 768px) {
     .graph-container {
         height: 350px;
     }
-
     .graph-toolbar {
         flex-direction: column;
         gap: 0.5rem;
         align-items: flex-start;
     }
 }
-
-/* ═══════════════════════════════════════════════════════════════
-   Citation Graph Standalone Page (cg- prefix)
-   ═══════════════════════════════════════════════════════════════ */
 .cg-page {
     padding: 2rem 1.5rem 3rem;
     max-width: 1600px;
     margin: 0 auto;
 }
-
 .cg-page-title {
     font-size: 1.8rem;
     font-weight: 800;
     text-align: center;
     margin-bottom: 0.3rem;
 }
-
 .cg-page-subtitle {
     text-align: center;
     color: #777;
     font-size: 0.88rem;
     margin-bottom: 1.5rem;
 }
-
 .cg-search-area {
     max-width: 640px;
     margin: 0 auto 1.5rem;
     position: relative;
 }
-
 .cg-search-box {
     margin-bottom: 0;
 }
-
-/* ── Typing Placeholder Animation ────────────────────── */
 .cg-typing-input {
     caret-color: #818cf8;
 }
-
 .cg-typing-input::placeholder {
     color: transparent;
 }
-
 .cg-typing-cursor {
     display: inline;
     animation: cg-blink 1s step-end infinite;
     color: #818cf8;
     font-weight: 300;
 }
-
 @keyframes cg-blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
 }
-
-/* Source Toggle */
 .cg-source-toggle {
     display: flex;
     justify-content: center;
@@ -327,7 +265,6 @@
     margin-right: auto;
     border: 1px solid rgba(255, 255, 255, 0.06);
 }
-
 .cg-source-btn {
     flex: 1;
     padding: 0.5rem 1rem;
@@ -344,23 +281,18 @@
     justify-content: center;
     gap: 0.35rem;
 }
-
 .cg-source-btn:hover {
     color: #aaa;
     background: rgba(255, 255, 255, 0.03);
 }
-
 .cg-source-btn.active {
     background: rgba(99, 102, 241, 0.12);
     color: #a5b4fc;
     box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
 }
-
 .cg-source-icon {
     font-size: 0.9rem;
 }
-
-/* Paper Results Dropdown */
 .cg-paper-results {
     position: absolute;
     top: 100%;
@@ -376,26 +308,21 @@
     display: none;
     backdrop-filter: blur(16px);
 }
-
 .cg-paper-results.active {
     display: block;
 }
-
 .cg-paper-result {
     padding: 0.75rem 1rem;
     cursor: pointer;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     transition: background 0.15s ease;
 }
-
 .cg-paper-result:hover {
     background: rgba(99, 102, 241, 0.08);
 }
-
 .cg-paper-result:last-child {
     border-bottom: none;
 }
-
 .cg-paper-result-title {
     font-size: 0.85rem;
     font-weight: 600;
@@ -403,15 +330,12 @@
     margin-bottom: 0.2rem;
     line-height: 1.3;
 }
-
 .cg-paper-result-meta {
     font-size: 0.72rem;
     color: #777;
     display: flex;
     gap: 0.8rem;
 }
-
-/* 3-Panel Workspace */
 .cg-workspace {
     display: grid;
     grid-template-columns: 260px 1fr 280px;
@@ -419,8 +343,6 @@
     min-height: 560px;
     transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-/* ── Cinema Mode ───────────────────────────────────── */
 .cg-workspace.cinema-mode {
     grid-template-columns: 0px 1fr 0px;
     gap: 0;
@@ -428,7 +350,6 @@
     margin-left: auto;
     margin-right: auto;
 }
-
 .cg-workspace.cinema-mode .cg-left-panel,
 .cg-workspace.cinema-mode .cg-right-panel {
     opacity: 0;
@@ -439,15 +360,12 @@
     width: 0;
     min-width: 0;
 }
-
 .cg-workspace.cinema-mode .cg-graph-container {
     min-height: 75vh;
 }
-
 .cg-workspace.cinema-mode .cg-center {
     border-radius: 12px;
 }
-
 .cg-left-panel,
 .cg-right-panel {
     background: rgba(15, 15, 25, 0.5);
@@ -458,7 +376,6 @@
     max-height: 620px;
     transition: opacity 0.35s ease, padding 0.35s ease, border-color 0.35s ease;
 }
-
 .cg-panel-heading {
     font-size: 0.72rem;
     font-weight: 700;
@@ -469,29 +386,22 @@
     padding-bottom: 0.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-
 .cg-panel-body {
     font-size: 0.82rem;
     color: #c0c0d0;
     line-height: 1.55;
 }
-
 .cg-panel-empty {
     color: #555;
     font-size: 0.8rem;
     text-align: center;
     padding: 2rem 0.5rem;
 }
-
-/* ═══════════════════════════════════════════════════════════════
-   Left Panel: Scrollable Papers List
-   ═══════════════════════════════════════════════════════════════ */
 .cg-paper-list {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
-
 .cg-list-item {
     display: flex;
     align-items: flex-start;
@@ -502,17 +412,14 @@
     transition: background 0.18s ease, box-shadow 0.18s ease;
     border-left: 3px solid transparent;
 }
-
 .cg-list-item:hover {
     background: rgba(255, 255, 255, 0.04);
 }
-
 .cg-list-item.active {
     background: rgba(99, 102, 241, 0.1);
     border-left-color: #818cf8;
     box-shadow: 0 0 12px rgba(99, 102, 241, 0.08);
 }
-
 .cg-list-item.pinned {
     border-left-color: #b28cfa;
     background: rgba(20, 18, 35, 0.97);
@@ -523,7 +430,6 @@
     border-bottom: 1px solid rgba(178, 140, 250, 0.15);
     margin-bottom: 2px;
 }
-
 .cg-list-dot {
     width: 8px;
     height: 8px;
@@ -531,17 +437,14 @@
     flex-shrink: 0;
     margin-top: 5px;
 }
-
 .cg-list-dot.dot-center    { background: #b28cfa; box-shadow: 0 0 4px rgba(178,140,250,0.5); }
 .cg-list-dot.dot-citation  { background: #34d399; }
 .cg-list-dot.dot-reference { background: #f472b6; }
 .cg-list-dot.dot-related   { background: #60a5fa; }
-
 .cg-list-info {
     flex: 1;
     min-width: 0;
 }
-
 .cg-list-title {
     font-size: 0.75rem;
     font-weight: 600;
@@ -552,7 +455,6 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
 .cg-list-meta {
     font-size: 0.65rem;
     color: #666;
@@ -560,10 +462,6 @@
     display: flex;
     gap: 0.5rem;
 }
-
-/* ═══════════════════════════════════════════════════════════════
-   Right Panel: Detail Fields
-   ═══════════════════════════════════════════════════════════════ */
 .cg-detail-title {
     font-size: 0.92rem;
     font-weight: 700;
@@ -571,13 +469,11 @@
     margin-bottom: 0.5rem;
     line-height: 1.35;
 }
-
 .cg-detail-authors {
     font-size: 0.78rem;
     color: #999;
     margin-bottom: 0.6rem;
 }
-
 .cg-detail-row {
     display: flex;
     align-items: center;
@@ -586,11 +482,9 @@
     color: #777;
     margin-bottom: 0.35rem;
 }
-
 .cg-detail-row span:first-child {
     flex-shrink: 0;
 }
-
 .cg-detail-abstract {
     font-size: 0.78rem;
     color: #888;
@@ -601,7 +495,6 @@
     max-height: 200px;
     overflow-y: auto;
 }
-
 .cg-detail-link {
     display: inline-flex;
     align-items: center;
@@ -612,11 +505,9 @@
     text-decoration: none;
     transition: color 0.15s ease;
 }
-
 .cg-detail-link:hover {
     color: #a5b4fc;
 }
-
 .cg-detail-type {
     display: inline-block;
     font-size: 0.68rem;
@@ -627,35 +518,28 @@
     border-radius: 20px;
     margin-bottom: 0.5rem;
 }
-
 .cg-type-center {
     background: rgba(178, 140, 250, 0.15);
     color: #b28cfa;
 }
-
 .cg-type-citation {
     background: rgba(52, 211, 153, 0.12);
     color: #34d399;
 }
-
 .cg-type-reference {
     background: rgba(244, 114, 182, 0.12);
     color: #f472b6;
 }
-
 .cg-type-related {
     background: rgba(96, 165, 250, 0.12);
     color: #60a5fa;
 }
-
-/* ── Concept Chips ────────────────────────────────────── */
 .cg-concepts-row {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
     margin-top: 0.5rem;
 }
-
 .cg-concept-chip {
     font-size: 0.62rem;
     font-weight: 600;
@@ -666,22 +550,17 @@
     border: 1px solid rgba(99, 102, 241, 0.15);
     white-space: nowrap;
 }
-
-/* Center Graph */
 .cg-center {
     display: flex;
     flex-direction: column;
     min-width: 0;
     overflow: hidden;
 }
-
 .cg-graph-container {
     flex: 1;
     min-height: 480px;
     transition: min-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-/* Legends */
 .cg-legends {
     display: flex;
     align-items: center;
@@ -689,12 +568,10 @@
     padding: 0.6rem 0;
     gap: 1rem;
 }
-
 .cg-legend-type {
     display: flex;
     gap: 0.8rem;
 }
-
 .cg-legend-item {
     display: flex;
     align-items: center;
@@ -708,36 +585,28 @@
     transition: all 0.2s ease;
     user-select: none;
 }
-
 .cg-legend-item:hover {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.08);
 }
-
 .cg-legend-item.inactive {
     opacity: 0.35;
     text-decoration: line-through;
 }
-
 .cg-legend-item.inactive:hover {
     opacity: 0.55;
 }
-
-/* ── Cinema Button ───────────────────────────────────── */
 .cg-cinema-btn {
     position: relative;
 }
-
 .cg-cinema-btn.active {
     background: rgba(178, 140, 250, 0.15);
     color: #b28cfa;
     border-color: rgba(178, 140, 250, 0.3);
 }
-
 .cg-cinema-btn svg {
     display: block;
 }
-
 .cg-source-badge {
     font-size: 0.65rem;
     font-weight: 600;
@@ -748,7 +617,6 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 4px;
 }
-
 .cg-fallback-badge {
     font-size: 0.62rem;
     font-weight: 700;
@@ -758,24 +626,19 @@
     border-radius: 4px;
     background: rgba(251, 191, 36, 0.08);
 }
-
-/* Responsive */
 @media (max-width: 1100px) {
     .cg-workspace {
         grid-template-columns: 1fr;
     }
-
     .cg-left-panel,
     .cg-right-panel {
         max-height: none;
     }
 }
-
 @media (max-width: 768px) {
     .cg-page {
         padding: 1rem;
     }
-
     .cg-page-title {
         font-size: 1.4rem;
     }

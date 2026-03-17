@@ -1,36 +1,16 @@
-"""
-OpenAlex citation graph provider.
-
-Fetches paper metadata, citations, and references from the OpenAlex API
-and returns a normalised graph dict.  Uses ThreadPoolExecutor for parallel
-fetching of references and citing papers.
-"""
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 
-# ── Constants ────────────────────────────────────────────────────
 API_BASE = "https://api.openalex.org/works"
 _MAILTO = "metaresearch@example.com"
 
-# ── Fields requested for all nodes (abstracts + concepts) ────────
 _NODE_FIELDS = "id,doi,title,authorships,publication_date,cited_by_count,abstract_inverted_index,concepts"
 _CENTER_FIELDS = (
     "id,doi,title,authorships,publication_date,cited_by_count,"
     "referenced_works,cited_by_api_url,abstract_inverted_index,concepts,related_works"
 )
 
-
-# ── ID Resolution ────────────────────────────────────────────────
 def resolve_id(paper_id: str) -> str:
-    """
-    Normalise a paper identifier for the OpenAlex API.
-
-    Accepted:
-        - DOI          → https://doi.org/10.xxxx/…
-        - OpenAlex URL → pass through
-        - S.S. hex ID  → unsupported (returns empty)
-    """
     pid = paper_id.strip()
 
     if pid.startswith("https://openalex.org/"):
@@ -43,12 +23,10 @@ def resolve_id(paper_id: str) -> str:
     if pid.startswith("https://doi.org/"):
         return pid
 
-    # 40-hex S.S. hash — OpenAlex can't resolve directly
     if len(pid) == 40 and all(c in "0123456789abcdef" for c in pid.lower()):
         return ""
 
     return pid
-
 
 def search_by_title(title: str) -> str:
     """Search OpenAlex by title.  Returns the first matching OpenAlex ID or ''."""
@@ -65,27 +43,22 @@ def search_by_title(title: str) -> str:
     except Exception:
         return ""
 
-
-# ── Helpers ──────────────────────────────────────────────────────
 def _authors_str(authorships: list[dict], limit: int = 3) -> str:
     return ", ".join(
         a.get("author", {}).get("display_name", "")
         for a in (authorships or [])[:limit]
     )
 
-
 def _clean_doi(raw: str | None) -> str:
     if not raw:
         return ""
     return raw.replace("https://doi.org/", "")
-
 
 def _year_from_date(date_str: str | None) -> int | None:
     if not date_str or len(date_str) < 4:
         return None
     y = date_str[:4]
     return int(y) if y.isdigit() else None
-
 
 def _reconstruct_abstract(inverted_index: dict | None) -> str:
     if not inverted_index:
@@ -97,14 +70,12 @@ def _reconstruct_abstract(inverted_index: dict | None) -> str:
     positions.sort()
     return " ".join(w for _, w in positions)
 
-
 def _extract_concepts(concepts: list[dict] | None, limit: int = 5) -> list[str]:
     """Extract top concept display names from OpenAlex concept objects."""
     if not concepts:
         return []
     sorted_c = sorted(concepts, key=lambda c: c.get("score", 0), reverse=True)
     return [c.get("display_name", "") for c in sorted_c[:limit] if c.get("display_name")]
-
 
 def _make_node(item: dict, node_type: str) -> dict:
     """Build a standardised node dict from a raw OpenAlex work object."""
@@ -120,16 +91,8 @@ def _make_node(item: dict, node_type: str) -> dict:
         "concepts": _extract_concepts(item.get("concepts")),
     }
 
-
-# ── Batch Fetcher (reusable) ────────────────────────────────────
 def _fetch_batch(ids: list[str], max_items: int,
                  node_type: str) -> list[tuple[dict, dict]]:
-    """
-    Fetch a batch of OpenAlex works by ID.
-
-    Returns list of (node_dict, edge_fragment) tuples.
-    edge_fragment has { 'peer_id': str } so the caller can wire edges.
-    """
     if not ids:
         return []
 
@@ -157,9 +120,7 @@ def _fetch_batch(ids: list[str], max_items: int,
         results.append((node, {"peer_id": node["id"]}))
     return results
 
-
 def _fetch_citing(cited_by_url: str, max_items: int) -> list[tuple[dict, dict]]:
-    """Fetch papers that cite this paper using the cited_by_api_url."""
     if not cited_by_url:
         return []
     try:
@@ -183,28 +144,17 @@ def _fetch_citing(cited_by_url: str, max_items: int) -> list[tuple[dict, dict]]:
         results.append((node, {"peer_id": node["id"]}))
     return results
 
-
 def _fetch_related(related_ids: list[str], max_items: int) -> list[tuple[dict, dict]]:
-    """Fetch related works by their OpenAlex IDs."""
     if not related_ids:
         return []
     return _fetch_batch(related_ids, max_items, "related")
 
-
-# ── Public API ───────────────────────────────────────────────────
 def fetch_graph(paper_id: str, max_citations: int = 20,
                 max_references: int = 20,
                 fallback_doi: str = "",
                 fallback_title: str = "") -> dict:
-    """
-    Build a citation graph dict from OpenAlex.
-
-    Uses ThreadPoolExecutor to fetch references, citations, and related
-    works in parallel.
-    """
     oa_id = resolve_id(paper_id)
 
-    # If raw S.S. hex ID that couldn't resolve, try fallback DOI / title
     if not oa_id:
         if fallback_doi:
             oa_id = f"https://doi.org/{fallback_doi}"
@@ -216,7 +166,6 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
                 "Try searching with a DOI or use Semantic Scholar."
             )
 
-    # ── Fetch center paper ───────────────────────────────────────
     try:
         resp = requests.get(
             f"{API_BASE}/{oa_id}",
@@ -228,7 +177,6 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
     except Exception:
         return _error_response("OpenAlex API failed")
 
-    # Center node
     center_id = data.get("id", "")
     doi = _clean_doi(data.get("doi"))
     year = _year_from_date(data.get("publication_date"))
@@ -253,7 +201,6 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
     edges = []
     seen = {center_id}
 
-    # ── Parallel fetch: references + citations + related ─────────
     ref_ids = data.get("referenced_works", [])[:max_references]
     cited_by_url = data.get("cited_by_api_url", "")
     related_ids = data.get("related_works", [])[:10]
@@ -287,7 +234,6 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
         "center": center, "nodes": nodes, "edges": edges,
         "source": "openalex", "error": None,
     }
-
 
 def _error_response(msg: str) -> dict:
     return {"center": None, "nodes": [], "edges": [],

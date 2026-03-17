@@ -1,79 +1,47 @@
-"""
-Semantic Scholar citation graph provider.
-
-Fetches paper metadata, citations, and references from the Semantic Scholar
-Graph API and returns a normalised graph dict.
-"""
-
 import re
 import time
 import requests
 
-# ── Constants ────────────────────────────────────────────────────
 API_BASE = "https://api.semanticscholar.org/graph/v1/paper"
-_MIN_INTERVAL = 1.5          # seconds between requests (free-tier safe)
-_last_request_ts: float = 0  # module-level rate-limit tracker
+_MIN_INTERVAL = 1.5
+_last_request_ts: float = 0
 
-
-# ── Rate Limiter ─────────────────────────────────────────────────
 def _rate_limit() -> None:
-    """Block until at least *_MIN_INTERVAL* seconds have passed since last call."""
     global _last_request_ts
     wait = _MIN_INTERVAL - (time.time() - _last_request_ts)
     if wait > 0:
         time.sleep(wait)
     _last_request_ts = time.time()
 
-
-# ── ID Resolution ────────────────────────────────────────────────
 def resolve_id(paper_id: str) -> str:
-    """
-    Normalise a paper identifier for the S.S. API.
-
-    Accepted formats:
-        - 40-char hex  (S.S. native)
-        - DOI          (10.xxxx/…)
-        - ArXiv        (2301.12345 or arXiv:2301.12345)
-        - OpenAlex URL (https://openalex.org/W…) — unsupported, returned as-is
-    """
     pid = paper_id.strip()
 
-    # Already an S.S. 40-hex ID
     if len(pid) == 40 and all(c in "0123456789abcdef" for c in pid.lower()):
         return pid
 
-    # DOI
     if pid.startswith("10.") or pid.startswith("doi:"):
         return f"DOI:{pid.removeprefix('doi:')}"
 
-    # ArXiv
     m = re.match(r"^(?:arXiv:)?(\d{4}\.\d{4,5}(?:v\d+)?)$", pid)
     if m:
         return f"ArXiv:{m.group(1)}"
 
-    return pid  # fallback: pass through
+    return pid
 
-
-# ── Helpers ──────────────────────────────────────────────────────
 def _extract_doi(ext_ids: dict | None) -> str:
     if not ext_ids:
         return ""
     return ext_ids.get("DOI", "") or ""
 
-
 def _authors_str(authors: list[dict], limit: int = 3) -> str:
     return ", ".join(a.get("name", "") for a in (authors or [])[:limit])
 
-
 def _extract_concepts(fields: list[dict] | None, limit: int = 5) -> list[str]:
-    """Extract field-of-study names from S.S. s2FieldsOfStudy."""
     if not fields:
         return []
     return [f.get("category", "") for f in fields[:limit] if f.get("category")]
 
-
 def _make_node(item: dict, node_type: str) -> dict:
-    """Build a standardised node dict from a raw S.S. paper object."""
     return {
         "id": item.get("paperId", ""),
         "label": item.get("title", "Untitled"),
@@ -86,17 +54,8 @@ def _make_node(item: dict, node_type: str) -> dict:
         "concepts": _extract_concepts(item.get("s2FieldsOfStudy")),
     }
 
-
-# ── Public API ───────────────────────────────────────────────────
 def fetch_graph(paper_id: str, max_citations: int = 20,
                 max_references: int = 20) -> dict:
-    """
-    Build a citation graph dict from Semantic Scholar.
-
-    Returns
-    -------
-    dict  with keys: center, nodes, edges, source, error
-    """
     resolved = resolve_id(paper_id)
     fields = (
         "title,authors,year,citationCount,externalIds,abstract,s2FieldsOfStudy,"
@@ -128,7 +87,6 @@ def fetch_graph(paper_id: str, max_citations: int = 20,
 
     return _build_graph(data, paper_id, max_citations, max_references)
 
-
 def _fetch_basic_info(resolved_id: str) -> dict | None:
     """Lightweight call for center-paper metadata (works even under rate limit)."""
     _rate_limit()
@@ -153,8 +111,6 @@ def _fetch_basic_info(resolved_id: str) -> dict | None:
         pass
     return None
 
-
-# ── Graph Builder ────────────────────────────────────────────────
 def _build_graph(data: dict, paper_id: str,
                  max_citations: int, max_references: int) -> dict:
     center_id = data.get("paperId", paper_id)
@@ -184,7 +140,6 @@ def _build_graph(data: dict, paper_id: str,
     edges = []
     seen = {center_id}
 
-    # Citations (papers that cite this one)
     for c in (data.get("citations") or [])[:max_citations]:
         cid = c.get("paperId")
         if not cid or cid in seen:
@@ -193,7 +148,6 @@ def _build_graph(data: dict, paper_id: str,
         nodes.append(_make_node(c, "citation"))
         edges.append({"source": cid, "target": center_id})
 
-    # References (papers this one cites)
     for r in (data.get("references") or [])[:max_references]:
         rid = r.get("paperId")
         if not rid or rid in seen:
@@ -206,7 +160,6 @@ def _build_graph(data: dict, paper_id: str,
         "center": center, "nodes": nodes, "edges": edges,
         "source": "semantic_scholar", "error": None,
     }
-
 
 def _error_response(msg: str) -> dict:
     return {"center": None, "nodes": [], "edges": [],

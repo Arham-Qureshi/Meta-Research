@@ -10,7 +10,6 @@ from flask import Blueprint, render_template, request, jsonify
 from datetime import datetime, timedelta
 import json
 
-
 bp = Blueprint(
     "citation_graph",
     __name__,
@@ -19,24 +18,12 @@ bp = Blueprint(
     static_url_path="/citation_graph/static",
 )
 
-
 @bp.route("/citation-graph")
 def page():
-    """Render the standalone Citation Graph explorer page."""
     return render_template("citation_graph.html")
-
 
 @bp.route("/api/paper/graph", methods=["GET"])
 def api_graph():
-    """
-    Return a citation/reference network for a paper.
-
-    Query params:
-        id              — paper ID (DOI, ArXiv, S.S., OpenAlex)
-        source          — 'semantic_scholar' | 'openalex'  (default: semantic_scholar)
-        max_citations   — int (default 15)
-        max_references  — int (default 15)
-    """
     from citation_graph.graph_builder import build_graph
 
     paper_id = request.args.get("id", "").strip()
@@ -50,7 +37,6 @@ def api_graph():
     max_cite = request.args.get("max_citations", 15, type=int)
     max_ref = request.args.get("max_references", 15, type=int)
 
-    # ── Check cache ──────────────────────────────────────────────
     from extensions import db
     from models import GraphCache
 
@@ -61,7 +47,6 @@ def api_graph():
     if cache_entry and (datetime.utcnow() - cache_entry.created_at) < timedelta(days=7):
         return jsonify(json.loads(cache_entry.graph_json))
 
-    # ── Build graph ──────────────────────────────────────────────
     result = build_graph(
         paper_id,
         source=source,
@@ -72,8 +57,6 @@ def api_graph():
     if result.get("error"):
         return jsonify({"error": result["error"]}), 502
 
-    # ── Save to cache ────────────────────────────────────────────
-    # Cache under the *actual* source used (may differ if fallback fired)
     actual_source = result.get("source", source)
     try:
         if cache_entry:
