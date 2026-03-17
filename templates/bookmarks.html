@@ -13,9 +13,9 @@
             </div>
             <a href="/api/bookmarks/export" class="btn-export" id="exportBtn" style="display:none;">
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
                 Export BibTeX
             </a>
@@ -50,7 +50,8 @@
                 <span class="no-results-icon">📚</span>
                 <h3>No bookmarks yet</h3>
                 <p>Search for papers and bookmark them to build your library.</p>
-                <a href="{{ url_for('pages.index') }}" class="btn btn-primary" style="margin-top:1rem;">Start Searching</a>
+                <a href="{{ url_for('pages.index') }}" class="btn btn-primary" style="margin-top:1rem;">Start
+                    Searching</a>
             </div>
         </div>
     </div>
@@ -59,7 +60,8 @@
             <h3 class="modal-title">New Collection</h3>
             <div class="form-group">
                 <label class="form-label" for="collectionNameInput">Name</label>
-                <input type="text" id="collectionNameInput" class="form-input" placeholder="e.g. Thesis References" maxlength="128">
+                <input type="text" id="collectionNameInput" class="form-input" placeholder="e.g. Thesis References"
+                    maxlength="128">
             </div>
             <div class="form-group">
                 <label class="form-label">Colour</label>
@@ -84,52 +86,46 @@
 {% endblock %}
 {% block scripts %}
 <script>
-/* ============================================================
-   Bookmarks Page — Collections + CRUD
-   ============================================================ */
-(function () {
-    let allBookmarks = [];
-    let allCollections = [];
-    let activeFilter = 'all';
-    let selectedColor = '#6366f1';
-    const grid = document.getElementById('bookmarksGrid');
-    const loading = document.getElementById('loadingContainer');
-    const empty = document.getElementById('emptyState');
-    const exportBtn = document.getElementById('exportBtn');
-    const collectionsList = document.getElementById('collectionsList');
-    const modal = document.getElementById('collectionModal');
-    const nameInput = document.getElementById('collectionNameInput');
-    // ── Init ─────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', init);
-    async function init() {
-        await Promise.all([loadBookmarks(), loadCollections()]);
-        renderSidebar();
-        renderBookmarks();
-        bindEvents();
-    }
-    // ── Data fetching ────────────────────────────────────────
-    async function loadBookmarks() {
-        try {
-            const res = await fetch('/api/bookmarks');
-            const data = await res.json();
-            allBookmarks = data.bookmarks || [];
-        } catch (err) {
-            console.error('Failed to load bookmarks', err);
+    (function () {
+        let allBookmarks = [];
+        let allCollections = [];
+        let activeFilter = 'all';
+        let selectedColor = '#6366f1';
+        const grid = document.getElementById('bookmarksGrid');
+        const loading = document.getElementById('loadingContainer');
+        const empty = document.getElementById('emptyState');
+        const exportBtn = document.getElementById('exportBtn');
+        const collectionsList = document.getElementById('collectionsList');
+        const modal = document.getElementById('collectionModal');
+        const nameInput = document.getElementById('collectionNameInput');
+        document.addEventListener('DOMContentLoaded', init);
+        async function init() {
+            await Promise.all([loadBookmarks(), loadCollections()]);
+            renderSidebar();
+            renderBookmarks();
+            bindEvents();
         }
-    }
-    async function loadCollections() {
-        try {
-            const res = await fetch('/api/collections');
-            const data = await res.json();
-            allCollections = data.collections || [];
-        } catch (err) {
-            console.error('Failed to load collections', err);
+        async function loadBookmarks() {
+            try {
+                const res = await fetch('/api/bookmarks');
+                const data = await res.json();
+                allBookmarks = data.bookmarks || [];
+            } catch (err) {
+                console.error('Failed to load bookmarks', err);
+            }
         }
-    }
-    // ── Render sidebar ───────────────────────────────────────
-    function renderSidebar() {
-        const uncollected = allBookmarks.filter(b => !b.collection_id).length;
-        const staticItems = `
+        async function loadCollections() {
+            try {
+                const res = await fetch('/api/collections');
+                const data = await res.json();
+                allCollections = data.collections || [];
+            } catch (err) {
+                console.error('Failed to load collections', err);
+            }
+        }
+        function renderSidebar() {
+            const uncollected = allBookmarks.filter(b => !b.collection_id).length;
+            const staticItems = `
             <button class="collection-item ${activeFilter === 'all' ? 'active' : ''}" data-collection-id="all">
                 <span class="collection-dot" style="background: var(--accent-gradient)"></span>
                 <span class="collection-name">All Papers</span>
@@ -140,69 +136,66 @@
                 <span class="collection-name">Uncollected</span>
                 <span class="collection-count">${uncollected}</span>
             </button>`;
-        const dynamicItems = allCollections.map(c => `
+            const dynamicItems = allCollections.map(c => `
             <button class="collection-item ${activeFilter === String(c.id) ? 'active' : ''}" data-collection-id="${c.id}">
                 <span class="collection-dot" style="background: ${c.color}"></span>
                 <span class="collection-name">${escapeHtml(c.name)}</span>
                 <span class="collection-count">${c.bookmark_count}</span>
                 <span class="collection-delete" data-id="${c.id}" title="Delete collection">&times;</span>
             </button>`).join('');
-        collectionsList.innerHTML = staticItems + dynamicItems;
-        // Bind sidebar clicks
-        collectionsList.querySelectorAll('.collection-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                if (e.target.classList.contains('collection-delete')) return;
-                activeFilter = item.dataset.collectionId;
-                renderSidebar();
-                renderBookmarks();
+            collectionsList.innerHTML = staticItems + dynamicItems;
+            collectionsList.querySelectorAll('.collection-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('collection-delete')) return;
+                    activeFilter = item.dataset.collectionId;
+                    renderSidebar();
+                    renderBookmarks();
+                });
             });
-        });
-        // Bind delete buttons
-        collectionsList.querySelectorAll('.collection-delete').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                if (!confirm('Delete this collection? Bookmarks inside will become uncollected.')) return;
-                await fetch(`/api/collections/${btn.dataset.id}`, { method: 'DELETE' });
-                activeFilter = 'all';
-                await Promise.all([loadBookmarks(), loadCollections()]);
-                renderSidebar();
-                renderBookmarks();
+            collectionsList.querySelectorAll('.collection-delete').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (!confirm('Delete this collection? Bookmarks inside will become uncollected.')) return;
+                    await fetch(`/api/collections/${btn.dataset.id}`, { method: 'DELETE' });
+                    activeFilter = 'all';
+                    await Promise.all([loadBookmarks(), loadCollections()]);
+                    renderSidebar();
+                    renderBookmarks();
+                });
             });
-        });
-    }
-    // ── Render bookmarks ─────────────────────────────────────
-    function renderBookmarks() {
-        loading.classList.remove('active');
-        let filtered = allBookmarks;
-        if (activeFilter === 'uncollected') {
-            filtered = allBookmarks.filter(b => !b.collection_id);
-        } else if (activeFilter !== 'all') {
-            filtered = allBookmarks.filter(b => String(b.collection_id) === activeFilter);
         }
-        if (allBookmarks.length === 0) {
-            empty.style.display = 'flex';
-            grid.style.display = 'none';
-            return;
+        function renderBookmarks() {
+            loading.classList.remove('active');
+            let filtered = allBookmarks;
+            if (activeFilter === 'uncollected') {
+                filtered = allBookmarks.filter(b => !b.collection_id);
+            } else if (activeFilter !== 'all') {
+                filtered = allBookmarks.filter(b => String(b.collection_id) === activeFilter);
+            }
+            if (allBookmarks.length === 0) {
+                empty.style.display = 'flex';
+                grid.style.display = 'none';
+                return;
+            }
+            if (filtered.length === 0) {
+                grid.style.display = 'none';
+                empty.style.display = 'flex';
+                empty.querySelector('h3').textContent = 'No papers in this collection';
+                empty.querySelector('p').textContent = 'Move papers here using the folder icon on each card.';
+                return;
+            }
+            exportBtn.style.display = 'inline-flex';
+            empty.style.display = 'none';
+            grid.style.display = 'grid';
+            grid.innerHTML = filtered.map(b => createBookmarkCard(b)).join('');
         }
-        if (filtered.length === 0) {
-            grid.style.display = 'none';
-            empty.style.display = 'flex';
-            empty.querySelector('h3').textContent = 'No papers in this collection';
-            empty.querySelector('p').textContent = 'Move papers here using the folder icon on each card.';
-            return;
-        }
-        exportBtn.style.display = 'inline-flex';
-        empty.style.display = 'none';
-        grid.style.display = 'grid';
-        grid.innerHTML = filtered.map(b => createBookmarkCard(b)).join('');
-    }
-    function createBookmarkCard(b) {
-        const savedDate = new Date(b.saved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-        const sourceLabel = { arxiv: 'ArXiv', semantic_scholar: 'Semantic Scholar', crossref: 'CrossRef', openalex: 'OpenAlex' }[b.source] || b.source || 'Unknown';
-        const moveOptions = allCollections.map(c =>
-            `<button class="cite-option" onclick="moveBookmark(${b.id}, ${c.id})">${escapeHtml(c.name)}</button>`
-        ).join('');
-        return `
+        function createBookmarkCard(b) {
+            const savedDate = new Date(b.saved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            const sourceLabel = { arxiv: 'ArXiv', semantic_scholar: 'Semantic Scholar', crossref: 'CrossRef', openalex: 'OpenAlex' }[b.source] || b.source || 'Unknown';
+            const moveOptions = allCollections.map(c =>
+                `<button class="cite-option" onclick="moveBookmark(${b.id}, ${c.id})">${escapeHtml(c.name)}</button>`
+            ).join('');
+            return `
         <article class="paper-card bookmarked" data-bookmark-id="${b.id}">
             <div class="paper-top-row">
                 <div class="paper-source-meta">
@@ -249,82 +242,76 @@
                 </div>
             </div>
         </article>`;
-    }
-    // ── Event bindings ───────────────────────────────────────
-    function bindEvents() {
-        // New collection modal
-        document.getElementById('newCollectionBtn').addEventListener('click', () => {
-            modal.classList.add('open');
-            nameInput.value = '';
-            nameInput.focus();
-        });
-        document.getElementById('cancelCollectionBtn').addEventListener('click', () => modal.classList.remove('open'));
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
-        // Colour picker
-        document.querySelectorAll('.color-swatch').forEach(swatch => {
-            swatch.addEventListener('click', () => {
-                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-                swatch.classList.add('active');
-                selectedColor = swatch.dataset.color;
-            });
-        });
-        // Save collection
-        document.getElementById('saveCollectionBtn').addEventListener('click', async () => {
-            const name = nameInput.value.trim();
-            if (!name) return;
-            const res = await fetch('/api/collections', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, color: selectedColor }),
-            });
-            if (res.ok) {
-                modal.classList.remove('open');
-                await loadCollections();
-                renderSidebar();
-            } else {
-                const data = await res.json();
-                alert(data.error || 'Failed to create collection.');
-            }
-        });
-        // Enter key in name input
-        nameInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') document.getElementById('saveCollectionBtn').click();
-        });
-    }
-    // ── Global helpers (called from onclick) ─────────────────
-    window.moveBookmark = async function (bookmarkId, collectionId) {
-        document.querySelectorAll('.cite-dropdown.open').forEach(d => d.classList.remove('open'));
-        await fetch(`/api/bookmarks/${bookmarkId}/move`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ collection_id: collectionId }),
-        });
-        await Promise.all([loadBookmarks(), loadCollections()]);
-        renderSidebar();
-        renderBookmarks();
-    };
-    window.removeBookmark = async function (id, btn) {
-        try {
-            const res = await fetch('/api/bookmarks/' + id, { method: 'DELETE' });
-            if (res.ok) {
-                const card = btn.closest('.paper-card');
-                card.style.animation = 'fadeOut 0.3s ease forwards';
-                setTimeout(async () => {
-                    await Promise.all([loadBookmarks(), loadCollections()]);
-                    renderSidebar();
-                    renderBookmarks();
-                }, 300);
-            }
-        } catch (err) {
-            console.error('Failed to remove bookmark', err);
         }
-    };
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-})();
+        function bindEvents() {
+            document.getElementById('newCollectionBtn').addEventListener('click', () => {
+                modal.classList.add('open');
+                nameInput.value = '';
+                nameInput.focus();
+            });
+            document.getElementById('cancelCollectionBtn').addEventListener('click', () => modal.classList.remove('open'));
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+            document.querySelectorAll('.color-swatch').forEach(swatch => {
+                swatch.addEventListener('click', () => {
+                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                    swatch.classList.add('active');
+                    selectedColor = swatch.dataset.color;
+                });
+            });
+            document.getElementById('saveCollectionBtn').addEventListener('click', async () => {
+                const name = nameInput.value.trim();
+                if (!name) return;
+                const res = await fetch('/api/collections', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, color: selectedColor }),
+                });
+                if (res.ok) {
+                    modal.classList.remove('open');
+                    await loadCollections();
+                    renderSidebar();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to create collection.');
+                }
+            });
+            nameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') document.getElementById('saveCollectionBtn').click();
+            });
+        }
+        window.moveBookmark = async function (bookmarkId, collectionId) {
+            document.querySelectorAll('.cite-dropdown.open').forEach(d => d.classList.remove('open'));
+            await fetch(`/api/bookmarks/${bookmarkId}/move`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ collection_id: collectionId }),
+            });
+            await Promise.all([loadBookmarks(), loadCollections()]);
+            renderSidebar();
+            renderBookmarks();
+        };
+        window.removeBookmark = async function (id, btn) {
+            try {
+                const res = await fetch('/api/bookmarks/' + id, { method: 'DELETE' });
+                if (res.ok) {
+                    const card = btn.closest('.paper-card');
+                    card.style.animation = 'fadeOut 0.3s ease forwards';
+                    setTimeout(async () => {
+                        await Promise.all([loadBookmarks(), loadCollections()]);
+                        renderSidebar();
+                        renderBookmarks();
+                    }, 300);
+                }
+            } catch (err) {
+                console.error('Failed to remove bookmark', err);
+            }
+        };
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    })();
 </script>
 {% endblock %}
