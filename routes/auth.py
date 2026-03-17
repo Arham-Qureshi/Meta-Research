@@ -1,9 +1,3 @@
-"""
-routes/auth.py — Authentication routes.
-
-Handles signup, login, logout, and current-user info.
-"""
-
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from extensions import db
@@ -87,3 +81,53 @@ def api_me():
             'email': current_user.email,
         })
     return jsonify({'authenticated': False})
+
+
+@bp.route('/api/signup', methods=['POST'])
+def api_signup():
+    """JSON-only signup for React frontend."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON body required.'}), 400
+
+    username = data.get('username', '').strip()
+    email = data.get('email', '').strip()
+    password = data.get('password', '')
+
+    if not username or not email or not password:
+        return jsonify({'error': 'All fields are required.'}), 400
+
+    if User.query.filter((User.username == username) | (User.email == email)).first():
+        return jsonify({'error': 'Username or email already exists.'}), 409
+
+    user = User(username=username, email=email)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+    login_user(user)
+    return jsonify({'message': 'Account created successfully', 'username': user.username}), 201
+
+
+@bp.route('/api/login', methods=['POST'])
+def api_login():
+    """JSON-only login for React frontend."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON body required.'}), 400
+
+    email = data.get('email', '').strip()
+    password = data.get('password', '')
+
+    user = User.query.filter_by(email=email).first()
+    if user and user.check_password(password):
+        login_user(user)
+        return jsonify({'message': 'Login successful', 'username': user.username}), 200
+    return jsonify({'error': 'Invalid email or password.'}), 401
+
+
+@bp.route('/api/logout', methods=['POST'])
+@login_required
+def api_logout():
+    """JSON-only logout for React frontend."""
+    logout_user()
+    return jsonify({'message': 'Logged out successfully.'})

@@ -1,19 +1,11 @@
-"""
-routes/dashboard.py — Dashboard API routes.
-
-Provides stats, weekly activity chart data, top topics,
-and recent activity for the user dashboard.
-"""
-
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify
 from flask_login import login_required, current_user
-from sqlalchemy import func, cast, Date
+from sqlalchemy import func
 from extensions import db
 from models import Bookmark, Collection, SearchHistory, PaperView
 
 bp = Blueprint('dashboard', __name__)
-
 
 @bp.route('/api/dashboard/stats')
 @login_required
@@ -25,19 +17,14 @@ def stats():
     total_searches = SearchHistory.query.filter_by(user_id=uid).count()
     total_views = PaperView.query.filter_by(user_id=uid).count()
 
-    # Most-used search source
     top_source_row = db.session.query(
         SearchHistory.source, func.count(SearchHistory.id)
-    ).filter_by(user_id=uid).group_by(SearchHistory.source)\
-     .order_by(func.count(SearchHistory.id).desc()).first()
+    ).filter_by(user_id=uid).group_by(SearchHistory.source)     .order_by(func.count(SearchHistory.id).desc()).first()
     top_source = top_source_row[0] if top_source_row else 'N/A'
 
-    # Top search topics (most repeated queries)
     top_queries = db.session.query(
         SearchHistory.search_query, func.count(SearchHistory.id).label('cnt')
-    ).filter(SearchHistory.user_id == uid)\
-     .group_by(SearchHistory.search_query)\
-     .order_by(func.count(SearchHistory.id).desc()).limit(5).all()
+    ).filter(SearchHistory.user_id == uid)     .group_by(SearchHistory.search_query)     .order_by(func.count(SearchHistory.id).desc()).limit(5).all()
     topics = [{'query': r[0], 'count': r[1]} for r in top_queries]
 
     return jsonify({
@@ -48,7 +35,6 @@ def stats():
         'top_source': top_source,
         'topics': topics,
     })
-
 
 @bp.route('/api/dashboard/chart')
 @login_required
@@ -84,22 +70,18 @@ def chart():
 
     return jsonify({'days': days})
 
-
 @bp.route('/api/dashboard/activity')
 @login_required
 def activity():
     """Return recent searches and recently viewed papers."""
     uid = current_user.id
-    recent_searches = SearchHistory.query.filter_by(user_id=uid)\
-        .order_by(SearchHistory.searched_at.desc()).limit(15).all()
-    recent_views = PaperView.query.filter_by(user_id=uid)\
-        .order_by(PaperView.viewed_at.desc()).limit(15).all()
+    recent_searches = SearchHistory.query.filter_by(user_id=uid)        .order_by(SearchHistory.searched_at.desc()).limit(15).all()
+    recent_views = PaperView.query.filter_by(user_id=uid)        .order_by(PaperView.viewed_at.desc()).limit(15).all()
 
     return jsonify({
         'searches': [s.to_dict() for s in recent_searches],
         'views': [v.to_dict() for v in recent_views],
     })
-
 
 @bp.route('/api/dashboard/history', methods=['DELETE'])
 @login_required

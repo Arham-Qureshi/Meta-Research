@@ -1,17 +1,9 @@
-"""
-routes/citations.py — Citation export API routes.
-
-Provides endpoints for formatting individual paper citations
-and bulk-exporting bookmarks as BibTeX.
-"""
-
 from flask import Blueprint, request, jsonify, Response
 from flask_login import login_required, current_user
 from models import Bookmark
 from services.citations import format_citation, bulk_bibtex, FORMAT_MAP
 
 bp = Blueprint('citations', __name__)
-
 
 @bp.route('/api/cite', methods=['POST'])
 def cite_paper():
@@ -27,13 +19,11 @@ def cite_paper():
     citation = format_citation(data['paper'], fmt)
     return jsonify({'citation': citation, 'format': fmt})
 
-
 @bp.route('/api/bookmarks/export')
 @login_required
 def export_bookmarks():
     """Export all user bookmarks as a downloadable .bib file."""
-    bookmarks = Bookmark.query.filter_by(user_id=current_user.id)\
-                              .order_by(Bookmark.saved_at.desc()).all()
+    bookmarks = Bookmark.query.filter_by(user_id=current_user.id)                              .order_by(Bookmark.saved_at.desc()).all()
     if not bookmarks:
         return jsonify({'error': 'No bookmarks to export.'}), 404
 

@@ -11,21 +11,17 @@ from models import Bookmark
 
 bp = Blueprint('bookmarks', __name__)
 
-
 @bp.route('/bookmarks')
 @login_required
 def page():
     return render_template('bookmarks.html')
 
-
 @bp.route('/api/bookmarks', methods=['GET'])
 @login_required
 def get_all():
     """Get all bookmarks for the current user."""
-    bmarks = Bookmark.query.filter_by(user_id=current_user.id)\
-                           .order_by(Bookmark.saved_at.desc()).all()
+    bmarks = Bookmark.query.filter_by(user_id=current_user.id)                           .order_by(Bookmark.saved_at.desc()).all()
     return jsonify({'bookmarks': [b.to_dict() for b in bmarks]})
-
 
 @bp.route('/api/bookmarks', methods=['POST'])
 @login_required
@@ -54,7 +50,6 @@ def add():
     db.session.commit()
     return jsonify({'message': 'Bookmarked successfully.', 'id': bookmark.id}), 201
 
-
 @bp.route('/api/bookmarks/<int:bookmark_id>', methods=['DELETE'])
 @login_required
 def remove(bookmark_id):
@@ -67,7 +62,6 @@ def remove(bookmark_id):
     db.session.delete(bookmark)
     db.session.commit()
     return jsonify({'message': 'Bookmark removed.'})
-
 
 @bp.route('/api/bookmarks/check/<path:paper_id>')
 @login_required

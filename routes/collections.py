@@ -1,10 +1,3 @@
-"""
-routes/collections.py — Bookmark collection CRUD routes.
-
-Provides endpoints for creating, listing, updating, and deleting
-bookmark collections, plus moving bookmarks between collections.
-"""
-
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from extensions import db
@@ -12,15 +5,12 @@ from models import Collection, Bookmark
 
 bp = Blueprint('collections', __name__)
 
-
 @bp.route('/api/collections', methods=['GET'])
 @login_required
 def list_collections():
     """List all collections for the current user, with bookmark counts."""
-    collections = Collection.query.filter_by(user_id=current_user.id)\
-                                   .order_by(Collection.created_at.desc()).all()
+    collections = Collection.query.filter_by(user_id=current_user.id)                                   .order_by(Collection.created_at.desc()).all()
     return jsonify({'collections': [c.to_dict() for c in collections]})
-
 
 @bp.route('/api/collections', methods=['POST'])
 @login_required
@@ -44,7 +34,6 @@ def create_collection():
     db.session.commit()
     return jsonify({'message': 'Collection created.', 'collection': collection.to_dict()}), 201
 
-
 @bp.route('/api/collections/<int:collection_id>', methods=['PUT'])
 @login_required
 def update_collection(collection_id):
@@ -63,7 +52,6 @@ def update_collection(collection_id):
     db.session.commit()
     return jsonify({'message': 'Collection updated.', 'collection': collection.to_dict()})
 
-
 @bp.route('/api/collections/<int:collection_id>', methods=['DELETE'])
 @login_required
 def delete_collection(collection_id):
@@ -74,13 +62,10 @@ def delete_collection(collection_id):
     if not collection:
         return jsonify({'error': 'Collection not found.'}), 404
 
-    # Unlink bookmarks from this collection (don't delete them)
-    Bookmark.query.filter_by(collection_id=collection_id)\
-                   .update({'collection_id': None})
+    Bookmark.query.filter_by(collection_id=collection_id)                   .update({'collection_id': None})
     db.session.delete(collection)
     db.session.commit()
     return jsonify({'message': 'Collection deleted.'})
-
 
 @bp.route('/api/bookmarks/<int:bookmark_id>/move', methods=['PUT'])
 @login_required

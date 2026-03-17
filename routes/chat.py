@@ -1,14 +1,7 @@
-"""
-routes/chat.py — AI chat and summarisation routes.
-
-Delegates to ChatService.
-"""
-
 from flask import Blueprint, request, jsonify
 from services.chat import chat_service
 
 bp = Blueprint('chat', __name__)
-
 
 @bp.route('/api/chat', methods=['POST'])
 def api_chat():
@@ -21,7 +14,6 @@ def api_chat():
     if result.get('error'):
         return jsonify({'error': result['error']}), 500
     return jsonify({'reply': result['reply']})
-
 
 @bp.route('/api/chat/summarize', methods=['POST'])
 def api_summarize():
