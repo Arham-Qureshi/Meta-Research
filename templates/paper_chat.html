@@ -114,8 +114,7 @@
 {% endblock %}
 {% block scripts %}
 <script>
-    // Paper ID passed from Flask route (minimal inline – just the data binding)
-    window.__PAPER_ID__ = {{ paper_id | tojson }};
+    window.__PAPER_ID__ = "{{ paper_id }}";
 </script>
 <script src="{{ url_for('static', filename='js/paper_loader.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
