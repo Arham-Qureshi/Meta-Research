@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Meta Research - Discover Academic Papers{% endblock %}
-
 {% block content %}
-<!-- Hero Section -->
 <section class="hero" id="hero">
     <div class="hero-glow"></div>
     <div class="hero-content">
@@ -14,8 +12,6 @@
         <p class="hero-subtitle">
             An AI-native research engine built for the next decade of scientific discovery.
         </p>
-
-        <!-- Search Bar -->
         <div class="search-container" id="searchContainer">
             <div class="search-box" id="searchBox">
                 <span class="search-icon">
@@ -34,7 +30,6 @@
                     <span class="search-btn-icon">→</span>
                 </button>
             </div>
-            <!-- Content-type Tabs -->
             <div class="content-type-tabs" id="contentTypeTabs">
                 <button class="type-tab active" data-type="all">All Results</button>
                 <button class="type-tab" data-type="papers">Papers</button>
@@ -44,8 +39,6 @@
                 <button class="type-tab" data-type="citations">Citations</button>
             </div>
         </div>
-
-        <!-- Stats -->
         <div class="hero-stats">
             <div class="stat-item">
                 <span class="stat-number">25M+</span>
@@ -62,12 +55,8 @@
         </div>
     </div>
 </section>
-
-<!-- Results Layout (sidebar + main) -->
 <section class="results-section" id="resultsSection">
-    <!-- Left Sidebar: Advanced Filters -->
     <aside class="filters-sidebar" id="filtersSidebar">
-        <!-- Source Filter -->
         <div class="sidebar-group">
             <h4 class="sidebar-group-title">SOURCE</h4>
             <div class="source-filter-list">
@@ -78,8 +67,6 @@
                 <button class="source-chip" data-source="openalex">OpenAlex</button>
             </div>
         </div>
-
-        <!-- Advanced Filters -->
         <div class="sidebar-group">
             <h4 class="sidebar-group-title">ADVANCED FILTERS</h4>
             <label class="filter-checkbox-row">
@@ -98,8 +85,6 @@
                 Has Codebase
             </label>
         </div>
-
-        <!-- Domain Filters -->
         <div class="sidebar-group">
             <h4 class="sidebar-group-title">DOMAIN</h4>
             <div class="domain-list">
@@ -113,8 +98,6 @@
                 <button class="domain-item" data-domain="robotics">Robotics</button>
             </div>
         </div>
-
-        <!-- Year Range Slider -->
         <div class="sidebar-group">
             <h4 class="sidebar-group-title">PUBLICATION YEAR</h4>
             <div class="year-slider-container">
@@ -132,8 +115,6 @@
             </div>
         </div>
     </aside>
-
-    <!-- Main Results Area -->
     <div class="results-main">
         <div class="results-header">
             <h2 class="results-title">
@@ -141,17 +122,11 @@
             </h2>
             <span class="results-count" id="resultsCount"></span>
         </div>
-
-        <!-- Loading -->
         <div class="loading-container" id="loadingContainer">
             <div class="loader-spinner"></div>
             <p class="loader-text">Searching research databases...</p>
         </div>
-
-        <!-- Paper Cards -->
         <div class="papers-grid" id="papersGrid"></div>
-
-        <!-- No Results -->
         <div class="no-results" id="noResults">
             <span class="no-results-icon">🔭</span>
             <h3>No papers found</h3>
@@ -159,8 +134,6 @@
         </div>
     </div>
 </section>
-
-<!-- Features Section -->
 <section class="features-section" id="featuresSection">
     <h2 class="section-title">Why Meta<span class="logo-accent">Research</span>?</h2>
     <div class="features-grid">

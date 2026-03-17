@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Explore – Meta Research{% endblock %}
-
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/discover.css') }}">
 {% endblock %}
-
 {% block content %}
 <section class="discover-page" id="discoverPage">
     <div class="discover-header">
@@ -16,8 +14,6 @@
             Popular research papers and the latest breakthroughs — updated every few hours.
         </p>
     </div>
-
-    <!-- ══ Trending Papers ════════════════════════════════════ -->
     <div class="discover-section" id="trendingSection">
         <div class="section-header">
             <div class="section-header-left">
@@ -30,8 +26,6 @@
                 </button>
             </div>
         </div>
-
-        <!-- Loading skeleton -->
         <div class="skeleton-grid" id="trendingLoading">
             <div class="skeleton-card">
                 <div class="skeleton-line h24 w70"></div>
@@ -52,12 +46,8 @@
                 <div class="skeleton-line w40"></div>
             </div>
         </div>
-
-        <!-- Papers grid (populated by JS) -->
         <div class="trending-grid" id="trendingGrid"></div>
     </div>
-
-    <!-- ══ Science News ═══════════════════════════════════════ -->
     <div class="discover-section" id="newsSection">
         <div class="section-header">
             <div class="section-header-left">
@@ -71,8 +61,6 @@
                 </button>
             </div>
         </div>
-
-        <!-- Loading skeleton -->
         <div class="skeleton-grid" id="newsLoading">
             <div class="skeleton-card">
                 <div class="skeleton-line h24 w90"></div>
@@ -90,13 +78,10 @@
                 <div class="skeleton-line w50"></div>
             </div>
         </div>
-
-        <!-- News grid (populated by JS) -->
         <div class="news-grid" id="newsGrid"></div>
     </div>
 </section>
 {% endblock %}
-
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/discover.js') }}"></script>
 {% endblock %}

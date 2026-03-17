@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Sign Up - Meta Research{% endblock %}
-
 {% block content %}
 <section class="auth-section">
     <div class="auth-card">
@@ -41,7 +40,6 @@
     </div>
 </section>
 {% endblock %}
-
 {% block scripts %}
 <script>
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
@@ -49,11 +47,9 @@
         const btn = document.getElementById('signupBtn');
         const errorDiv = document.getElementById('signupError');
         const loader = btn.querySelector('.btn-loader');
-
         btn.disabled = true;
         loader.style.display = 'inline-block';
         errorDiv.style.display = 'none';
-
         try {
             const res = await fetch('/signup', {
                 method: 'POST',
@@ -79,7 +75,6 @@
             loader.style.display = 'none';
         }
     });
-
     // Password strength indicator
     document.getElementById('password').addEventListener('input', (e) => {
         const val = e.target.value;
@@ -90,17 +85,14 @@
         if (/[A-Z]/.test(val)) score++;
         if (/[0-9]/.test(val)) score++;
         if (/[^A-Za-z0-9]/.test(val)) score++;
-
         const labels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Excellent'];
         const colors = ['', '#ef4444', '#f59e0b', '#84cc16', '#22c55e', '#06b6d4'];
-
         if (val.length === 0) {
             strength.innerHTML = '';
         } else {
             strength.innerHTML = `<span style="color:${colors[score]}">● ${labels[score]}</span>`;
         }
     });
-
     document.getElementById('passwordToggle').addEventListener('click', () => {
         const input = document.getElementById('password');
         input.type = input.type === 'password' ? 'text' : 'password';

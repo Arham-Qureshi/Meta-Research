@@ -1,28 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Chat with Paper – Meta Research{% endblock %}
-
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 <link rel="stylesheet" href="{{ url_for('citation_graph.static', filename='css/graph.css') }}">
 {% endblock %}
-
 {% block content %}
 <section class="chat-page" id="chatPage">
-    <!-- Back link -->
     <a href="{{ url_for('pages.index') }}" class="chat-back-link">← Back to Search</a>
-
     <div class="chat-layout">
-        <!-- ===== Left Panel: Paper Info + Graph ===== -->
         <div class="paper-info-panel" id="paperInfoPanel">
             <div class="paper-info-loading" id="paperInfoLoading">
                 <div class="loader-spinner"></div>
                 <p class="loader-text">Loading paper info...</p>
             </div>
-
-            <!-- Paper info gets injected here by paper_loader.js -->
             <div id="paperInfoContent"></div>
-
-            <!-- Tab bar (shown after paper loads) -->
             <div class="paper-tabs" id="paperTabs">
                 <button class="paper-tab active" data-tab="infoTab">
                     <span class="paper-tab-icon">📄</span> Info
@@ -31,13 +22,9 @@
                     <span class="paper-tab-icon">🕸️</span> Citation Network
                 </button>
             </div>
-
-            <!-- Info Tab Content (default) -->
             <div class="tab-content active" id="infoTab">
                 <div id="paperDetails"></div>
             </div>
-
-            <!-- Graph Tab Content -->
             <div class="tab-content" id="graphTab">
                 <div class="graph-section">
                     <div class="graph-toolbar">
@@ -64,25 +51,17 @@
                             <button class="graph-control-btn" id="graphRelayout" title="Re-layout">↻</button>
                         </div>
                     </div>
-
                     <div class="graph-container" id="graphContainer">
-                        <!-- Loading state -->
                         <div class="graph-loading" id="graphLoading">
                             <div class="loader-spinner"></div>
                             <span class="graph-loading-text">Building citation network...</span>
                         </div>
-
-                        <!-- Empty state -->
                         <div class="graph-empty" id="graphEmpty" style="display:none;">
                             <span class="graph-empty-icon">🕸️</span>
                             <h4>No Citation Data</h4>
                             <p>Could not find citation information for this paper.</p>
                         </div>
-
-                        <!-- Cytoscape canvas -->
                         <div class="graph-canvas" id="graphCanvas"></div>
-
-                        <!-- Tooltip -->
                         <div class="graph-tooltip" id="graphTooltip">
                             <div class="graph-tooltip-title"></div>
                             <div class="graph-tooltip-authors"></div>
@@ -92,8 +71,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- ===== Right Panel: Chat ===== -->
         <div class="chat-panel">
             <div class="chat-header">
                 <div class="chat-header-title">
@@ -101,8 +78,6 @@
                 </div>
                 <div class="chat-header-status">AI Ready</div>
             </div>
-
-            <!-- Messages -->
             <div class="chat-messages" id="chatMessages">
                 <div class="chat-welcome">
                     <span class="chat-welcome-icon">🧠</span>
@@ -119,8 +94,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Input -->
             <div class="chat-input-area">
                 <div class="chat-input-box">
                     <textarea id="chatInput" class="chat-input" rows="1"
@@ -139,7 +112,6 @@
     </div>
 </section>
 {% endblock %}
-
 {% block scripts %}
 <script>
     // Paper ID passed from Flask route (minimal inline – just the data binding)

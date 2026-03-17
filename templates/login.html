@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Login - Meta Research{% endblock %}
-
 {% block content %}
 <section class="auth-section">
     <div class="auth-card">
@@ -35,7 +34,6 @@
     </div>
 </section>
 {% endblock %}
-
 {% block scripts %}
 <script>
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -43,11 +41,9 @@
         const btn = document.getElementById('loginBtn');
         const errorDiv = document.getElementById('loginError');
         const loader = btn.querySelector('.btn-loader');
-
         btn.disabled = true;
         loader.style.display = 'inline-block';
         errorDiv.style.display = 'none';
-
         try {
             const res = await fetch('/login', {
                 method: 'POST',
@@ -72,7 +68,6 @@
             loader.style.display = 'none';
         }
     });
-
     document.getElementById('passwordToggle').addEventListener('click', () => {
         const input = document.getElementById('password');
         input.type = input.type === 'password' ? 'text' : 'password';

@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}My Collections - Meta Research{% endblock %}
-
 {% block content %}
 <section class="bookmarks-page" id="bookmarksPage">
     <div class="bookmarks-header">
@@ -22,9 +21,7 @@
             </a>
         </div>
     </div>
-
     <div class="bookmarks-layout">
-        <!-- Collection sidebar -->
         <aside class="collections-sidebar" id="collectionsSidebar">
             <div class="collections-header">
                 <h3 class="collections-sidebar-title">Collections</h3>
@@ -43,19 +40,12 @@
                 </button>
             </div>
         </aside>
-
-        <!-- Main content -->
         <div class="bookmarks-main">
-            <!-- Loading -->
             <div class="loading-container active" id="loadingContainer">
                 <div class="loader-spinner"></div>
                 <p class="loader-text">Loading your bookmarks...</p>
             </div>
-
-            <!-- Bookmarks Grid -->
             <div class="papers-grid" id="bookmarksGrid" style="display:none;"></div>
-
-            <!-- Empty State -->
             <div class="no-results" id="emptyState" style="display:none;">
                 <span class="no-results-icon">📚</span>
                 <h3>No bookmarks yet</h3>
@@ -64,8 +54,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Create Collection Modal -->
     <div class="modal-overlay" id="collectionModal">
         <div class="modal-card">
             <h3 class="modal-title">New Collection</h3>
@@ -94,7 +82,6 @@
     </div>
 </section>
 {% endblock %}
-
 {% block scripts %}
 <script>
 /* ============================================================
@@ -105,7 +92,6 @@
     let allCollections = [];
     let activeFilter = 'all';
     let selectedColor = '#6366f1';
-
     const grid = document.getElementById('bookmarksGrid');
     const loading = document.getElementById('loadingContainer');
     const empty = document.getElementById('emptyState');
@@ -113,17 +99,14 @@
     const collectionsList = document.getElementById('collectionsList');
     const modal = document.getElementById('collectionModal');
     const nameInput = document.getElementById('collectionNameInput');
-
     // ── Init ─────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', init);
-
     async function init() {
         await Promise.all([loadBookmarks(), loadCollections()]);
         renderSidebar();
         renderBookmarks();
         bindEvents();
     }
-
     // ── Data fetching ────────────────────────────────────────
     async function loadBookmarks() {
         try {
@@ -134,7 +117,6 @@
             console.error('Failed to load bookmarks', err);
         }
     }
-
     async function loadCollections() {
         try {
             const res = await fetch('/api/collections');
@@ -144,7 +126,6 @@
             console.error('Failed to load collections', err);
         }
     }
-
     // ── Render sidebar ───────────────────────────────────────
     function renderSidebar() {
         const uncollected = allBookmarks.filter(b => !b.collection_id).length;
@@ -159,7 +140,6 @@
                 <span class="collection-name">Uncollected</span>
                 <span class="collection-count">${uncollected}</span>
             </button>`;
-
         const dynamicItems = allCollections.map(c => `
             <button class="collection-item ${activeFilter === String(c.id) ? 'active' : ''}" data-collection-id="${c.id}">
                 <span class="collection-dot" style="background: ${c.color}"></span>
@@ -167,9 +147,7 @@
                 <span class="collection-count">${c.bookmark_count}</span>
                 <span class="collection-delete" data-id="${c.id}" title="Delete collection">&times;</span>
             </button>`).join('');
-
         collectionsList.innerHTML = staticItems + dynamicItems;
-
         // Bind sidebar clicks
         collectionsList.querySelectorAll('.collection-item').forEach(item => {
             item.addEventListener('click', (e) => {
@@ -179,7 +157,6 @@
                 renderBookmarks();
             });
         });
-
         // Bind delete buttons
         collectionsList.querySelectorAll('.collection-delete').forEach(btn => {
             btn.addEventListener('click', async (e) => {
@@ -193,24 +170,20 @@
             });
         });
     }
-
     // ── Render bookmarks ─────────────────────────────────────
     function renderBookmarks() {
         loading.classList.remove('active');
-
         let filtered = allBookmarks;
         if (activeFilter === 'uncollected') {
             filtered = allBookmarks.filter(b => !b.collection_id);
         } else if (activeFilter !== 'all') {
             filtered = allBookmarks.filter(b => String(b.collection_id) === activeFilter);
         }
-
         if (allBookmarks.length === 0) {
             empty.style.display = 'flex';
             grid.style.display = 'none';
             return;
         }
-
         if (filtered.length === 0) {
             grid.style.display = 'none';
             empty.style.display = 'flex';
@@ -218,21 +191,17 @@
             empty.querySelector('p').textContent = 'Move papers here using the folder icon on each card.';
             return;
         }
-
         exportBtn.style.display = 'inline-flex';
         empty.style.display = 'none';
         grid.style.display = 'grid';
         grid.innerHTML = filtered.map(b => createBookmarkCard(b)).join('');
     }
-
     function createBookmarkCard(b) {
         const savedDate = new Date(b.saved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         const sourceLabel = { arxiv: 'ArXiv', semantic_scholar: 'Semantic Scholar', crossref: 'CrossRef', openalex: 'OpenAlex' }[b.source] || b.source || 'Unknown';
-
         const moveOptions = allCollections.map(c =>
             `<button class="cite-option" onclick="moveBookmark(${b.id}, ${c.id})">${escapeHtml(c.name)}</button>`
         ).join('');
-
         return `
         <article class="paper-card bookmarked" data-bookmark-id="${b.id}">
             <div class="paper-top-row">
@@ -281,7 +250,6 @@
             </div>
         </article>`;
     }
-
     // ── Event bindings ───────────────────────────────────────
     function bindEvents() {
         // New collection modal
@@ -292,7 +260,6 @@
         });
         document.getElementById('cancelCollectionBtn').addEventListener('click', () => modal.classList.remove('open'));
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
-
         // Colour picker
         document.querySelectorAll('.color-swatch').forEach(swatch => {
             swatch.addEventListener('click', () => {
@@ -301,7 +268,6 @@
                 selectedColor = swatch.dataset.color;
             });
         });
-
         // Save collection
         document.getElementById('saveCollectionBtn').addEventListener('click', async () => {
             const name = nameInput.value.trim();
@@ -320,13 +286,11 @@
                 alert(data.error || 'Failed to create collection.');
             }
         });
-
         // Enter key in name input
         nameInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') document.getElementById('saveCollectionBtn').click();
         });
     }
-
     // ── Global helpers (called from onclick) ─────────────────
     window.moveBookmark = async function (bookmarkId, collectionId) {
         document.querySelectorAll('.cite-dropdown.open').forEach(d => d.classList.remove('open'));
@@ -339,7 +303,6 @@
         renderSidebar();
         renderBookmarks();
     };
-
     window.removeBookmark = async function (id, btn) {
         try {
             const res = await fetch('/api/bookmarks/' + id, { method: 'DELETE' });
@@ -356,7 +319,6 @@
             console.error('Failed to remove bookmark', err);
         }
     };
-
     function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');

@@ -1,14 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Dashboard – Meta Research{% endblock %}
-
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 {% endblock %}
-
 {% block content %}
 <section class="dashboard-page" id="dashboardPage">
-
-    <!-- ═══ Hero Banner ═══════════════════════════════════════ -->
     <div class="dash-hero">
         <div class="dash-hero-content">
             <span class="dash-hero-badge">YOUR WORKSPACE</span>
@@ -32,8 +28,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ═══ Stats Cards ═══════════════════════════════════════ -->
     <div class="stats-grid" id="statsGrid">
         <div class="stat-card stat-card-bookmarks">
             <div class="stat-card-glow"></div>
@@ -60,10 +54,7 @@
             <div class="stat-card-label">Papers Viewed</div>
         </div>
     </div>
-
-    <!-- ═══ Middle Row: Chart + Topics ════════════════════════ -->
     <div class="dash-middle-grid">
-        <!-- Weekly Activity Chart -->
         <div class="dash-panel chart-panel">
             <div class="dash-panel-header">
                 <h3 class="dash-panel-title">📊 Weekly Activity</h3>
@@ -71,10 +62,8 @@
             </div>
             <div class="chart-container" id="chartContainer">
                 <div class="chart-bars" id="chartBars">
-                    <!-- Filled by JS -->
                 </div>
                 <div class="chart-labels" id="chartLabels">
-                    <!-- Filled by JS -->
                 </div>
             </div>
             <div class="chart-legend">
@@ -82,8 +71,6 @@
                 <span class="legend-item"><span class="legend-dot legend-dot-view"></span> Views</span>
             </div>
         </div>
-
-        <!-- Top Topics -->
         <div class="dash-panel topics-panel">
             <div class="dash-panel-header">
                 <h3 class="dash-panel-title">🏷️ Top Topics</h3>
@@ -93,10 +80,7 @@
             </div>
         </div>
     </div>
-
-    <!-- ═══ Activity Panels ═══════════════════════════════════ -->
     <div class="activity-grid">
-        <!-- Recent Searches -->
         <div class="dash-panel">
             <div class="dash-panel-header">
                 <h3 class="dash-panel-title">🔍 Recent Searches</h3>
@@ -106,8 +90,6 @@
                 <div class="activity-empty">No searches yet. Go discover!</div>
             </div>
         </div>
-
-        <!-- Recently Viewed Papers -->
         <div class="dash-panel">
             <div class="dash-panel-header">
                 <h3 class="dash-panel-title">📄 Recently Viewed</h3>
@@ -117,14 +99,11 @@
             </div>
         </div>
     </div>
-
-    <!-- Live indicator -->
     <div class="dash-live-indicator" id="liveIndicator">
         <span class="live-dot"></span> Live
     </div>
 </section>
 {% endblock %}
-
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}
