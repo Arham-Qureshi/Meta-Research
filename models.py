@@ -10,11 +10,6 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 
-
-# ═══════════════════════════════════════════════════════════════
-#  USER
-# ═══════════════════════════════════════════════════════════════
-
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -38,17 +33,12 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-
-# ═══════════════════════════════════════════════════════════════
-#  COLLECTION
-# ═══════════════════════════════════════════════════════════════
-
 class Collection(db.Model):
     """Named folder for organising bookmarks."""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(128), nullable=False)
-    color = db.Column(db.String(7), default='#6366f1')  # hex colour
+    color = db.Column(db.String(7), default='#6366f1')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     bookmarks = db.relationship('Bookmark', backref='collection', lazy=True)
@@ -68,11 +58,6 @@ class Collection(db.Model):
 
     def __repr__(self):
         return f'<Collection {self.name}>'
-
-
-# ═══════════════════════════════════════════════════════════════
-#  BOOKMARK
-# ═══════════════════════════════════════════════════════════════
 
 class Bookmark(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -107,11 +92,6 @@ class Bookmark(db.Model):
     def __repr__(self):
         return f'<Bookmark {self.paper_id}>'
 
-
-# ═══════════════════════════════════════════════════════════════
-#  GRAPH CACHE
-# ═══════════════════════════════════════════════════════════════
-
 class GraphCache(db.Model):
     """Cache citation graph JSON to reduce external API calls."""
     id = db.Column(db.Integer, primary_key=True)
@@ -126,11 +106,6 @@ class GraphCache(db.Model):
 
     def __repr__(self):
         return f'<GraphCache {self.paper_id}:{self.source}>'
-
-
-# ═══════════════════════════════════════════════════════════════
-#  SEARCH HISTORY
-# ═══════════════════════════════════════════════════════════════
 
 class SearchHistory(db.Model):
     """Tracks user search queries for the dashboard."""
@@ -152,11 +127,6 @@ class SearchHistory(db.Model):
 
     def __repr__(self):
         return f'<SearchHistory {self.search_query[:30]}>'
-
-
-# ═══════════════════════════════════════════════════════════════
-#  PAPER VIEW
-# ═══════════════════════════════════════════════════════════════
 
 class PaperView(db.Model):
     """Tracks papers viewed by a user for the dashboard."""
