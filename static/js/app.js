@@ -1,4 +1,3 @@
-
 let currentSource = 'all';
 let currentType = 'all';
 let currentDomain = 'all';
@@ -80,11 +79,113 @@ attachRealTimeListeners();
 (function initSearch() {
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
+    const searchSuggestions = document.getElementById('searchSuggestions');
     if (!searchInput || !searchBtn) return;
-    searchBtn.addEventListener('click', () => performSearch());
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') performSearch();
+
+    searchBtn.addEventListener('click', () => {
+        if (searchSuggestions) searchSuggestions.classList.remove('active');
+        performSearch();
     });
+
+    let debounceTimeout;
+    let selectedIndex = -1;
+    let currentSuggestions = [];
+
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        clearTimeout(debounceTimeout);
+        selectedIndex = -1;
+
+        if (query.length < 3) {
+            if (searchSuggestions) searchSuggestions.classList.remove('active');
+            return;
+        }
+
+        debounceTimeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/suggest?q=${encodeURIComponent(query)}`);
+                const suggestions = await res.json();
+
+                if (suggestions && suggestions.length > 0 && searchSuggestions) {
+                    currentSuggestions = suggestions;
+                    renderSuggestions(suggestions);
+                } else if (searchSuggestions) {
+                    searchSuggestions.classList.remove('active');
+                    currentSuggestions = [];
+                }
+            } catch (err) {
+                console.error('Autocomplete error:', err);
+            }
+        }, 600); // 600ms debounce
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (!searchSuggestions || !searchSuggestions.classList.contains('active')) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+            return;
+        }
+
+        const items = searchSuggestions.querySelectorAll('.suggestion-item');
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex + 1) % items.length;
+            updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+            updateSelection(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedIndex >= 0 && selectedIndex < items.length) {
+                items[selectedIndex].click();
+            } else {
+                searchSuggestions.classList.remove('active');
+                performSearch();
+            }
+        } else if (e.key === 'Escape') {
+            searchSuggestions.classList.remove('active');
+        }
+    });
+
+    function updateSelection(items) {
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    function renderSuggestions(suggestions) {
+        if (!searchSuggestions) return;
+        searchSuggestions.innerHTML = suggestions.map((s, idx) => `
+            <div class="suggestion-item" data-index="${idx}">
+                <span class="suggestion-title">${escapeHtml(s.title)}</span>
+                <span class="suggestion-hint">${escapeHtml(s.hint || '')}</span>
+            </div>
+        `).join('');
+
+        searchSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const index = item.dataset.index;
+                searchInput.value = suggestions[index].title;
+                searchSuggestions.classList.remove('active');
+                performSearch();
+            });
+        });
+
+        searchSuggestions.classList.add('active');
+    }
+
+    document.addEventListener('click', (e) => {
+        if (searchSuggestions && !searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+            searchSuggestions.classList.remove('active');
+        }
+    });
+
 })();
 async function performSearch() {
     const query = document.getElementById('searchInput').value.trim();
@@ -122,7 +223,7 @@ async function performSearch() {
                 const bData = await bRes.json();
                 bData.bookmarks.forEach(b => currentBookmarkedIds.add(b.paper_id));
             }
-        } catch (_) {  }
+        } catch (_) { }
         renderPapers();
     } catch (err) {
         loadingContainer.classList.remove('active');
