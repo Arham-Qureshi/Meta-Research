@@ -10,10 +10,10 @@
         <p class="cg-page-subtitle">Explore how research papers are connected through citations and references.</p>
         <div class="cg-source-toggle" id="cgSourceToggle">
             <button class="cg-source-btn active" data-source="semantic_scholar">
-                <span class="cg-source-icon">🔬</span> Semantic Scholar
+                <i data-lucide="microscope" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;"></i> Semantic Scholar
             </button>
             <button class="cg-source-btn" data-source="openalex">
-                <span class="cg-source-icon">📚</span> OpenAlex
+                <i data-lucide="book-open" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;"></i> OpenAlex
             </button>
         </div>
         <div class="search-box cg-search-box" id="cgSearchBox">
@@ -63,7 +63,7 @@
                 </div>
                 <div class="graph-toolbar-right">
                     <span class="cg-source-badge" id="cgSourceBadge"></span>
-                    <span class="cg-fallback-badge" id="cgFallbackBadge" style="display:none;">⚡ Fallback</span>
+                    <span class="cg-fallback-badge" id="cgFallbackBadge" style="display:none;"><i data-lucide="zap" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;"></i> Fallback</span>
                     <button class="graph-control-btn" id="cgZoomIn" title="Zoom in">+</button>
                     <button class="graph-control-btn" id="cgZoomOut" title="Zoom out">−</button>
                     <button class="graph-control-btn" id="cgFit" title="Fit to view">⊞</button>
@@ -84,7 +84,7 @@
                     <span class="graph-loading-text">Building citation network...</span>
                 </div>
                 <div class="graph-empty" id="cgGraphEmpty" style="display:none;">
-                    <span class="graph-empty-icon">🕸️</span>
+                    <div class="graph-empty-icon" style="margin-bottom: 1rem; color: var(--text-muted);"><i data-lucide="network" style="width: 48px; height: 48px;"></i></div>
                     <h4>No Citation Data</h4>
                     <p>Could not find citation information for this paper.</p>
                 </div>
