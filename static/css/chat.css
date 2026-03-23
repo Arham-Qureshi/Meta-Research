@@ -100,7 +100,7 @@
 .paper-info-abstract {
     font-size: 0.88rem;
     line-height: 1.7;
-    color: var(--text-secondary);
+    color: #f8f9fa;
 }
 
 .paper-info-categories {
@@ -153,6 +153,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    color: #f8f9fa;
 }
 
 .chat-header-status {
@@ -247,7 +248,7 @@
     background: var(--bg-elevated);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-full);
-    color: var(--text-secondary);
+    color: #f8f9fa;
     cursor: pointer;
     transition: all var(--transition-fast);
     font-family: var(--font-body);

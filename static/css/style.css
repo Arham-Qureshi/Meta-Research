@@ -824,7 +824,7 @@ a:hover {
 .form-label {
     font-size: 0.82rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: #d1d5db;
 }
 
 .form-input {
@@ -918,7 +918,7 @@ a:hover {
     text-align: center;
     margin-top: 1.5rem;
     font-size: 0.85rem;
-    color: var(--text-secondary);
+    color: #d1d5db;
 }
 
 .auth-link {
