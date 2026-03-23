@@ -310,7 +310,7 @@ function createPaperCard(paper, isBookmarked) {
         </div>
         <h3 class="paper-title">${escapeHtml(paper.title)}</h3>
         <p class="paper-authors">${escapeHtml(paper.authors || 'Unknown authors')}</p>
-        <p class="paper-summary" id="summary-${escapeAttr(paper.id)}">${escapeHtml(paper.summary)}</p>
+        <p class="paper-summary" id="summary-${escapeAttr(paper.id)}">${escapeHtml(stripHtml(paper.summary))}</p>
         ${paper.full_summary && paper.full_summary.length > 500
             ? `<button class="expand-btn" onclick="toggleSummary('${escapeAttr(paper.id)}', this, '${escapeAttr(paper.full_summary)}')">Show more ↓</button>`
             : ''}
@@ -425,13 +425,14 @@ async function toggleBookmark(btn, paper) {
 function toggleSummary(paperId, btn, fullSummary) {
     const summaryEl = document.getElementById('summary-' + paperId);
     if (!summaryEl) return;
+    const cleanSummary = stripHtml(fullSummary);
     if (summaryEl.classList.contains('expanded')) {
         summaryEl.classList.remove('expanded');
-        summaryEl.textContent = fullSummary.substring(0, 500) + '...';
+        summaryEl.textContent = cleanSummary.substring(0, 500) + '...';
         btn.textContent = 'Show more ↓';
     } else {
         summaryEl.classList.add('expanded');
-        summaryEl.textContent = fullSummary;
+        summaryEl.textContent = cleanSummary;
         btn.textContent = 'Show less ↑';
     }
 }
@@ -440,6 +441,13 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+function stripHtml(html) {
+    if (!html) return '';
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    const text = div.textContent || div.innerText || '';
+    return text.replace(/<\/?[^>]+(>|$)/g, "");
 }
 function escapeAttr(text) {
     if (!text) return '';

@@ -51,13 +51,11 @@
     font-size: clamp(1.4rem, 3vw, 2rem);
     font-weight: 800;
     line-height: 1.2;
+    color: #f8f9fa;
 }
 
 .gradient-text {
-    background: var(--accent-gradient-text);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #f8f9fa;
 }
 
 .dash-hero-subtitle {
@@ -205,10 +203,7 @@
 .stat-card-value {
     font-size: 2rem;
     font-weight: 800;
-    background: var(--accent-gradient-text);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #f8f9fa;
     line-height: 1.2;
     transition: transform var(--transition-spring);
 }
@@ -267,6 +262,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    color: #f8f9fa;
 }
 
 .dash-panel-badge {

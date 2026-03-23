@@ -47,7 +47,7 @@
                 if (detailsEl) {
                     detailsEl.innerHTML =
                         '<h4 class="paper-info-section-title">Abstract</h4>' +
-                        '<p class="paper-info-abstract">' + escapeH(paper.full_summary || paper.summary || 'No abstract available.') + '</p>' +
+                        '<p class="paper-info-abstract">' + escapeH(stripHtml(paper.full_summary || paper.summary || 'No abstract available.')) + '</p>' +
                         (categories ? '<h4 class="paper-info-section-title">Categories</h4><div class="paper-info-categories">' + categories + '</div>' : '') +
                         '<div class="paper-info-actions">' +
                         (paper.pdf_url ? '<a href="' + escapeH(paper.pdf_url) + '" target="_blank" rel="noopener" class="btn btn-download"><span>📥</span> Download PDF</a>' : '') +
@@ -75,5 +75,12 @@
         var d = document.createElement('div');
         d.textContent = text;
         return d.innerHTML;
+    }
+    function stripHtml(html) {
+        if (!html) return '';
+        var d = document.createElement('div');
+        d.innerHTML = html;
+        var text = d.textContent || d.innerText || '';
+        return text.replace(/<\/?[^>]+(>|$)/g, "");
     }
 })();

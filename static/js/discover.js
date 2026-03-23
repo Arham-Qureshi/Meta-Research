@@ -97,7 +97,7 @@
                 '<span class="trending-meta-chip meta-chip-year">📅 ' + esc(paper.published || '') + '</span>' +
                 journal +
                 '</div>' +
-                '<p class="trending-card-summary">' + esc(paper.summary || '') + '</p>' +
+                '<p class="trending-card-summary">' + esc(stripHtml(paper.summary || '')) + '</p>' +
                 (cats ? '<div class="trending-card-categories">' + cats + '</div>' : '');
             card.addEventListener('click', function () {
                 var pid = paper.id || '';
@@ -159,6 +159,13 @@
         var d = document.createElement('div');
         d.textContent = text;
         return d.innerHTML;
+    }
+    function stripHtml(html) {
+        if (!html) return '';
+        var d = document.createElement('div');
+        d.innerHTML = html;
+        var text = d.textContent || d.innerText || '';
+        return text.replace(/<\/?[^>]+(>|$)/g, "");
     }
     function truncate(str, len) {
         if (!str) return '';

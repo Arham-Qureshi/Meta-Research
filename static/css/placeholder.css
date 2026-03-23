@@ -19,7 +19,7 @@
 .dynamic-placeholder-text {
     font-family: var(--font-body);
     font-size: 1rem;
-    color: var(--text-muted);
+    color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
 }

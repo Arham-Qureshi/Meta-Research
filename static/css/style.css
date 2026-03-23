@@ -10,9 +10,9 @@
     --accent-secondary: #e2b373;
     --accent-gradient: linear-gradient(135deg, #c5832b 0%, #d4a359 50%, #e2b373 100%);
     --accent-gradient-text: linear-gradient(135deg, #e2b373, #c5832b, #b37021);
-    --text-primary: #f0f0f0;
-    --text-secondary: #b3b3b3;
-    --text-muted: #808080;
+    --text-primary: #ffd700;
+    --text-secondary: #e6c200;
+    --text-muted: #b39700;
     --text-on-accent: #ffffff;
     --border-subtle: rgba(255, 255, 255, 0.08);
     --border-medium: rgba(255, 255, 255, 0.15);
@@ -78,6 +78,7 @@ h6,
 .nav-logo {
     font-family: var(--font-display);
     font-weight: 700;
+    color: #f8f9fa;
 }
 
 a {
@@ -139,7 +140,7 @@ a:hover {
     gap: 0.5rem;
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #f8f9fa;
     text-decoration: none;
 }
 
@@ -375,10 +376,7 @@ a:hover {
 }
 
 .hero-gradient {
-    background: var(--accent-gradient-text);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #f8f9fa;
 }
 
 .hero-subtitle {
@@ -426,12 +424,12 @@ a:hover {
     outline: none;
     font-family: var(--font-body);
     font-size: 1rem;
-    color: var(--text-primary);
+    color: #ffffff;
     padding: 0.7rem 0;
 }
 
 .search-input::placeholder {
-    color: var(--text-muted);
+    color: #ffffff;
 }
 
 .search-btn {
@@ -560,15 +558,12 @@ a:hover {
     display: block;
     font-size: 1.5rem;
     font-weight: 800;
-    background: var(--accent-gradient-text);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #f8f9fa;
 }
 
 .stat-label {
     font-size: 0.78rem;
-    color: var(--text-muted);
+    color: #ffffff;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-top: 0.15rem;
@@ -1211,7 +1206,7 @@ a:hover {
     font-weight: 500;
     border-radius: var(--radius-full);
     background: transparent;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.7);
     border: 1px solid transparent;
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -1219,13 +1214,13 @@ a:hover {
 }
 
 .type-tab:hover {
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.9);
     background: rgba(255, 255, 255, 0.04);
 }
 
 .type-tab.active {
     background: var(--bg-card);
-    color: var(--text-primary);
+    color: #ffffff;
     border-color: var(--border-medium);
     box-shadow: 0 0 0 1px var(--border-subtle);
 }
