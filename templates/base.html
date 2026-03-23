@@ -89,6 +89,12 @@
     <script src="{{ url_for('static', filename='js/bg.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/placeholder.js') }}"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

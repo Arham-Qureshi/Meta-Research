@@ -16,10 +16,10 @@
             <div id="paperInfoContent"></div>
             <div class="paper-tabs" id="paperTabs">
                 <button class="paper-tab active" data-tab="infoTab">
-                    <span class="paper-tab-icon">📄</span> Info
+                    <i data-lucide="file-text" style="width: 16px; height: 16px; margin-right: 6px;"></i> Info
                 </button>
                 <button class="paper-tab" data-tab="graphTab">
-                    <span class="paper-tab-icon">🕸️</span> Citation Network
+                    <i data-lucide="network" style="width: 16px; height: 16px; margin-right: 6px;"></i> Citation Network
                 </button>
             </div>
             <div class="tab-content active" id="infoTab">
@@ -57,7 +57,7 @@
                             <span class="graph-loading-text">Building citation network...</span>
                         </div>
                         <div class="graph-empty" id="graphEmpty" style="display:none;">
-                            <span class="graph-empty-icon">🕸️</span>
+                            <div class="graph-empty-icon" style="margin-bottom: 1rem; color: var(--text-muted);"><i data-lucide="network" style="width: 48px; height: 48px;"></i></div>
                             <h4>No Citation Data</h4>
                             <p>Could not find citation information for this paper.</p>
                         </div>
@@ -74,13 +74,13 @@
         <div class="chat-panel">
             <div class="chat-header">
                 <div class="chat-header-title">
-                    <span>💬</span> Chat with Paper
+                    <i data-lucide="message-square" style="width: 20px; height: 20px; margin-right: 8px;"></i> Chat with Paper
                 </div>
                 <div class="chat-header-status">AI Ready</div>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="chat-welcome">
-                    <span class="chat-welcome-icon">🧠</span>
+                    <div class="chat-welcome-icon" style="margin-bottom: 1rem; color: var(--accent-primary); display: flex; justify-content: center;"><i data-lucide="brain" style="width: 48px; height: 48px;"></i></div>
                     <h3>Ask anything about this paper</h3>
                     <p>
                         I've read the abstract and metadata. Ask me questions about the methodology, results,
