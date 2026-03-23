@@ -23,13 +23,13 @@
     window.addEventListener('resize', resize);
     resize();
 
-    const gridSizeX = 60;
-    const gridSizeY = 60;
+    const gridSizeX = 40;
+    const gridSizeY = 40;
     const speedX = 10;
-    const speedY = 15;
+    const speedY = 25;
     const cards = [
         {
-            x: 0.08, y: 0.15,
+            x: 0.1, y: 0.15,
             size: 110,
             rotX: Math.PI / 6,
             rotY: Math.PI / 4,

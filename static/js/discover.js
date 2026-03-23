@@ -41,15 +41,17 @@
                 showSkeleton(trendingLoading, false);
                 var papers = data.papers || [];
                 if (papers.length === 0) {
-                    trendingGrid.innerHTML = emptyState('🔬', 'No trending papers right now', 'Check back later – we refresh every few hours.');
+                    trendingGrid.innerHTML = emptyState('microscope', 'No trending papers right now', 'Check back later – we refresh every few hours.');
                 } else {
                     renderTrendingCards(papers);
                 }
+                if (window.lucide) window.lucide.createIcons();
                 if (onDone) onDone();
             })
             .catch(function (err) {
                 showSkeleton(trendingLoading, false);
-                trendingGrid.innerHTML = emptyState('⚠️', 'Could not load trending papers', 'Please try again later.');
+                trendingGrid.innerHTML = emptyState('alert-triangle', 'Could not load trending papers', 'Please try again later.');
+                if (window.lucide) window.lucide.createIcons();
                 console.error('[Discover] Trending error:', err);
                 if (onDone) onDone();
             });
@@ -64,15 +66,17 @@
                 showSkeleton(newsLoading, false);
                 var articles = data.articles || [];
                 if (articles.length === 0) {
-                    newsGrid.innerHTML = emptyState('📰', 'No news articles available', 'Add a GNEWS_API_KEY or NEWSDATA_API_KEY to your .env to enable the news feed.');
+                    newsGrid.innerHTML = emptyState('newspaper', 'No news articles available', 'Add a GNEWS_API_KEY or NEWSDATA_API_KEY to your .env to enable the news feed.');
                 } else {
                     renderNewsCards(articles);
                 }
+                if (window.lucide) window.lucide.createIcons();
                 if (onDone) onDone();
             })
             .catch(function (err) {
                 showSkeleton(newsLoading, false);
-                newsGrid.innerHTML = emptyState('⚠️', 'Could not load news', 'Please try again later.');
+                newsGrid.innerHTML = emptyState('alert-triangle', 'Could not load news', 'Please try again later.');
+                if (window.lucide) window.lucide.createIcons();
                 console.error('[Discover] News error:', err);
                 if (onDone) onDone();
             });
@@ -93,8 +97,8 @@
                 '<h3 class="trending-card-title">' + esc(paper.title) + '</h3>' +
                 '<p class="trending-card-authors">' + esc(paper.authors || 'Unknown') + '</p>' +
                 '<div class="trending-card-meta">' +
-                '<span class="trending-meta-chip meta-chip-citations">📊 ' + formatNum(paper.citations || 0) + ' citations</span>' +
-                '<span class="trending-meta-chip meta-chip-year">📅 ' + esc(paper.published || '') + '</span>' +
+                '<span class="trending-meta-chip meta-chip-citations"><i data-lucide="bar-chart-2" style="width: 14px; height: 14px; margin-right: 4px;"></i> ' + formatNum(paper.citations || 0) + ' citations</span>' +
+                '<span class="trending-meta-chip meta-chip-year"><i data-lucide="calendar" style="width: 14px; height: 14px; margin-right: 4px;"></i> ' + esc(paper.published || '') + '</span>' +
                 journal +
                 '</div>' +
                 '<p class="trending-card-summary">' + esc(stripHtml(paper.summary || '')) + '</p>' +
@@ -129,7 +133,7 @@
             card.rel = 'noopener noreferrer';
             var imageHtml = article.image
                 ? '<img class="news-card-image" src="' + esc(article.image) + '" alt="" loading="lazy">'
-                : '<div class="news-card-image-placeholder">📰</div>';
+                : '<div class="news-card-image-placeholder"><i data-lucide="newspaper" style="width: 32px; height: 32px; opacity: 0.5;"></i></div>';
             var providerBadge = article.provider
                 ? '<span class="news-card-provider">' + esc(article.provider) + '</span>'
                 : '';
@@ -191,7 +195,7 @@
     }
     function emptyState(icon, title, text) {
         return '<div class="empty-state">' +
-            '<span class="empty-state-icon">' + icon + '</span>' +
+            '<span class="empty-state-icon"><i data-lucide="' + icon + '" style="width: 48px; height: 48px; margin: 0 auto;"></i></span>' +
             '<h3>' + title + '</h3>' +
             '<p>' + text + '</p>' +
             '</div>';

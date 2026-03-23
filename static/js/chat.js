@@ -36,7 +36,9 @@ function initChatLogic() {
         if (welcome) welcome.remove();
         const msg = document.createElement('div');
         msg.className = `chat-msg ${role}`;
-        const avatarText = role === 'user' ? '👤' : '🤖';
+        const avatarText = role === 'user' 
+            ? '<i data-lucide="user" style="width: 20px; height: 20px;"></i>' 
+            : '<i data-lucide="bot" style="width: 20px; height: 20px;"></i>';
         const bubble = isHtml ? content : escapeHtml(content);
         msg.innerHTML = `
             <div class="chat-msg-avatar">${avatarText}</div>
@@ -44,6 +46,7 @@ function initChatLogic() {
         `;
         chatMessages.appendChild(msg);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (window.lucide) window.lucide.createIcons();
         return msg;
     }
     function showTyping() {
@@ -51,13 +54,14 @@ function initChatLogic() {
         typing.className = 'chat-typing';
         typing.id = 'chatTypingIndicator';
         typing.innerHTML = `
-            <div class="chat-typing-avatar">🤖</div>
+            <div class="chat-typing-avatar"><i data-lucide="bot" style="width: 20px; height: 20px;"></i></div>
             <div class="chat-typing-dots">
                 <span></span><span></span><span></span>
             </div>
         `;
         chatMessages.appendChild(typing);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (window.lucide) window.lucide.createIcons();
     }
     function hideTyping() {
         const typing = document.getElementById('chatTypingIndicator');
@@ -108,7 +112,7 @@ function initChatLogic() {
         if (summarizeBtn) summarizeBtn.disabled = true;
         const welcome = chatMessages.querySelector('.chat-welcome');
         if (welcome) welcome.remove();
-        addMessage('user', '📝 Generate a comprehensive summary of this paper', false);
+        addMessage('user', 'Generate a comprehensive summary of this paper', false);
         showTyping();
         try {
             const res = await fetch('/api/chat/summarize', {
