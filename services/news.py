@@ -10,6 +10,7 @@ class NewsService(BaseService):
     NEWSDATA_URL = 'https://newsdata.io/api/1/news'
     OPENALEX_URL = 'https://api.openalex.org/works'
     CACHE_TTL = 5 * 60 * 60
+    # refresh every 5 hours
 
     def __init__(self):
         self._gnews_key = os.environ.get('GNEWS_API_KEY', '')
