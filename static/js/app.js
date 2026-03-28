@@ -79,6 +79,13 @@ attachRealTimeListeners();
 (function restoreSearchState() {
     const searchInput = document.getElementById('searchInput');
     if (!searchInput) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlQuery = urlParams.get('q');
+    if (urlQuery) {
+        searchInput.value = urlQuery;
+        performSearch();
+        return;
+    }
     try {
         const savedQuery = sessionStorage.getItem('mr_search_query');
         const savedPapers = sessionStorage.getItem('mr_search_papers');
@@ -93,6 +100,7 @@ attachRealTimeListeners();
                 if (resultsSection) resultsSection.classList.add('active');
                 if (resultsQuery) resultsQuery.textContent = savedQuery;
                 if (featuresSection) featuresSection.classList.add('hidden');
+                updateClearBtnVisibility();
                 (async () => {
                     try {
                         const meRes = await fetch('/api/me');
@@ -223,6 +231,11 @@ attachRealTimeListeners();
 async function performSearch() {
     const query = document.getElementById('searchInput').value.trim();
     if (!query) return;
+    updateClearBtnVisibility();
+    try {
+        const newUrl = window.location.pathname + '?q=' + encodeURIComponent(query);
+        history.replaceState(null, '', newUrl);
+    } catch (_) { }
     const resultsSection = document.getElementById('resultsSection');
     const loadingContainer = document.getElementById('loadingContainer');
     const papersGrid = document.getElementById('papersGrid');
@@ -252,6 +265,7 @@ async function performSearch() {
             sessionStorage.setItem('mr_search_query', query);
             sessionStorage.setItem('mr_search_papers', JSON.stringify(data.papers));
         } catch (_) { }
+        saveRecentSearch(query);
         try {
             const meRes = await fetch('/api/me');
             const meData = await meRes.json();
@@ -426,6 +440,7 @@ async function toggleBookmark(btn, paper) {
                 btn.classList.remove('active');
                 btn.querySelector('svg').setAttribute('fill', 'none');
                 currentBookmarkedIds.delete(paper.id);
+                showToast('Removed from Collections');
             }
         } catch (err) {
             console.error('Failed to remove bookmark', err);
@@ -453,6 +468,7 @@ async function toggleBookmark(btn, paper) {
                     { transform: 'scale(1)' }
                 ], { duration: 300, easing: 'cubic-bezier(0.34,1.56,0.64,1)' });
                 currentBookmarkedIds.add(paper.id);
+                showToast('Added to Collections');
             }
         } catch (err) {
             console.error('Failed to add bookmark', err);
@@ -541,6 +557,111 @@ function showToast(message, isError = false) {
         setTimeout(() => toast.remove(), 300);
     }, 2500);
 }
-document.addEventListener('click', () => {
+document.addEventListener('click', (e) => {
     document.querySelectorAll('.cite-dropdown.open').forEach(d => d.classList.remove('open'));
+    const recentSearches = document.getElementById('recentSearches');
+    const searchInput = document.getElementById('searchInput');
+    if (recentSearches && searchInput && !searchInput.contains(e.target) && !recentSearches.contains(e.target)) {
+        recentSearches.classList.remove('active');
+    }
 });
+function updateClearBtnVisibility() {
+    const clearBtn = document.getElementById('searchClearBtn');
+    const searchInput = document.getElementById('searchInput');
+    if (!clearBtn || !searchInput) return;
+    clearBtn.classList.toggle('visible', searchInput.value.length > 0);
+}
+(function initClearButton() {
+    const clearBtn = document.getElementById('searchClearBtn');
+    const searchInput = document.getElementById('searchInput');
+    if (!clearBtn || !searchInput) return;
+    updateClearBtnVisibility();
+    searchInput.addEventListener('input', updateClearBtnVisibility);
+    clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        updateClearBtnVisibility();
+        const resultsSection = document.getElementById('resultsSection');
+        const featuresSection = document.getElementById('featuresSection');
+        if (resultsSection) resultsSection.classList.remove('active');
+        if (featuresSection) featuresSection.classList.remove('hidden');
+        currentFetchedPapers = [];
+        try {
+            sessionStorage.removeItem('mr_search_query');
+            sessionStorage.removeItem('mr_search_papers');
+            history.replaceState(null, '', window.location.pathname);
+        } catch (_) { }
+        searchInput.focus();
+    });
+})();
+(function initBackToTop() {
+    const btn = document.getElementById('backToTop');
+    if (!btn) return;
+    window.addEventListener('scroll', () => {
+        btn.classList.toggle('visible', window.scrollY > 400);
+    });
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+})();
+function saveRecentSearch(query) {
+    try {
+        let recent = JSON.parse(localStorage.getItem('mr_recent_searches') || '[]');
+        recent = recent.filter(q => q.toLowerCase() !== query.toLowerCase());
+        recent.unshift(query);
+        recent = recent.slice(0, 5);
+        localStorage.setItem('mr_recent_searches', JSON.stringify(recent));
+    } catch (_) { }
+}
+(function initRecentSearches() {
+    const searchInput = document.getElementById('searchInput');
+    const recentContainer = document.getElementById('recentSearches');
+    if (!searchInput || !recentContainer) return;
+    function renderRecent() {
+        let recent = [];
+        try { recent = JSON.parse(localStorage.getItem('mr_recent_searches') || '[]'); } catch (_) { }
+        if (recent.length === 0) {
+            recentContainer.classList.remove('active');
+            return;
+        }
+        recentContainer.innerHTML = '<div class="recent-searches-header">' +
+            '<span class="recent-searches-title">Recent Searches</span>' +
+            '<button class="recent-searches-clear" id="clearRecentBtn">Clear</button>' +
+            '</div>' +
+            recent.map(q =>
+                '<div class="recent-search-item">' +
+                '<svg class="recent-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                '<polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 105.64-11.36L1 10"></path>' +
+                '</svg>' +
+                '<span>' + escapeHtml(q) + '</span>' +
+                '</div>'
+            ).join('');
+        recentContainer.classList.add('active');
+        recentContainer.querySelectorAll('.recent-search-item').forEach((item, idx) => {
+            item.addEventListener('click', () => {
+                searchInput.value = recent[idx];
+                recentContainer.classList.remove('active');
+                performSearch();
+            });
+        });
+        const clearBtn = document.getElementById('clearRecentBtn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                localStorage.removeItem('mr_recent_searches');
+                recentContainer.classList.remove('active');
+            });
+        }
+    }
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim() === '') {
+            renderRecent();
+        }
+    });
+    searchInput.addEventListener('input', () => {
+        if (searchInput.value.trim().length > 0) {
+            recentContainer.classList.remove('active');
+        } else {
+            renderRecent();
+        }
+    });
+})();
