@@ -76,6 +76,39 @@ function attachRealTimeListeners() {
     }
 }
 attachRealTimeListeners();
+(function restoreSearchState() {
+    const searchInput = document.getElementById('searchInput');
+    if (!searchInput) return;
+    try {
+        const savedQuery = sessionStorage.getItem('mr_search_query');
+        const savedPapers = sessionStorage.getItem('mr_search_papers');
+        if (savedQuery && savedPapers) {
+            const papers = JSON.parse(savedPapers);
+            if (papers.length > 0) {
+                searchInput.value = savedQuery;
+                currentFetchedPapers = papers;
+                const resultsSection = document.getElementById('resultsSection');
+                const resultsQuery = document.getElementById('resultsQuery');
+                const featuresSection = document.getElementById('featuresSection');
+                if (resultsSection) resultsSection.classList.add('active');
+                if (resultsQuery) resultsQuery.textContent = savedQuery;
+                if (featuresSection) featuresSection.classList.add('hidden');
+                (async () => {
+                    try {
+                        const meRes = await fetch('/api/me');
+                        const meData = await meRes.json();
+                        if (meData.authenticated) {
+                            const bRes = await fetch('/api/bookmarks');
+                            const bData = await bRes.json();
+                            bData.bookmarks.forEach(b => currentBookmarkedIds.add(b.paper_id));
+                        }
+                    } catch (_) { }
+                    renderPapers();
+                })();
+            }
+        }
+    } catch (_) { }
+})();
 (function initSearch() {
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
@@ -215,6 +248,10 @@ async function performSearch() {
             return;
         }
         currentFetchedPapers = data.papers;
+        try {
+            sessionStorage.setItem('mr_search_query', query);
+            sessionStorage.setItem('mr_search_papers', JSON.stringify(data.papers));
+        } catch (_) { }
         try {
             const meRes = await fetch('/api/me');
             const meData = await meRes.json();
