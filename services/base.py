@@ -1,23 +1,10 @@
-"""
-services/base.py — BaseService foundation class.
-
-Every service inherits BaseService to get:
-    • Standardised HTTP GET/POST with timeout + error handling
-    • Safe JSON parsing
-    • Reusable response-building helpers
-
-This is the single place to adjust timeouts, user-agents, or
-retry logic — all downstream services inherit the change.
-"""
-
 import requests
 import logging
 
 log = logging.getLogger(__name__)
 
 class BaseService:
-    """Abstract foundation for all backend services."""
-
+    # all backend services.
     TIMEOUT = 15
     HEADERS = {
         'User-Agent': 'MetaResearch/1.0 (Academic Research Tool)',
@@ -25,11 +12,6 @@ class BaseService:
 
     def _get(self, url: str, params: dict | None = None,
              headers: dict | None = None, timeout: int | None = None) -> requests.Response | None:
-        """
-        Perform an HTTP GET with shared defaults.
-
-        Returns the Response object on success, None on network failure.
-        """
         try:
             resp = requests.get(
                 url,
@@ -63,7 +45,7 @@ class BaseService:
 
     @staticmethod
     def _safe_json(response: requests.Response | None) -> dict:
-        """Parse JSON from a response, returning {} on any failure."""
+        #Parse JSON 
         if response is None:
             return {}
         try:
