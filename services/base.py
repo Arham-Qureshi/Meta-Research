@@ -27,9 +27,6 @@ class BaseService:
 
     def _post(self, url: str, json_data: dict | None = None,
               headers: dict | None = None, timeout: int | None = None) -> requests.Response | None:
-        """
-        Perform an HTTP POST with shared defaults.
-        """
         try:
             resp = requests.post(
                 url,
@@ -55,5 +52,5 @@ class BaseService:
 
     @staticmethod
     def _error(message: str) -> dict:
-        """Build a standardised error dict."""
+        #error handling
         return {'error': message}
