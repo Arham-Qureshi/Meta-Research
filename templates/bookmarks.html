@@ -109,7 +109,7 @@
             try {
                 const res = await fetch('/api/bookmarks');
                 const data = await res.json();
-                allBookmarks = data.bookmarks || [];
+                allBookmarks = data.data || data.bookmarks || [];
             } catch (err) {
                 console.error('Failed to load bookmarks', err);
             }
@@ -118,7 +118,7 @@
             try {
                 const res = await fetch('/api/collections');
                 const data = await res.json();
-                allCollections = data.collections || [];
+                allCollections = data.data || data.collections || [];
             } catch (err) {
                 console.error('Failed to load collections', err);
             }
