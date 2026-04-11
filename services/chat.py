@@ -1,11 +1,7 @@
 import os
 from services.base import BaseService
 
-try:
-    import google.generativeai as genai
-    GENAI_AVAILABLE = True
-except ImportError:
-    GENAI_AVAILABLE = False
+
 
 try:
     from groq import Groq
@@ -23,14 +19,10 @@ except ImportError:
 
 class ChatService(BaseService):
 
-    GEMINI_MODEL = 'gemini-2.0-flash'
+
     GROQ_MODEL = 'llama-3.3-70b-versatile'
 
     def __init__(self):
-        api_key = os.environ.get('GEMINI_API_KEY', '')
-        if GENAI_AVAILABLE and api_key:
-            genai.configure(api_key=api_key)
-        self._gemini_key = api_key
 
         groq_key = os.environ.get('GROQ_API_KEY', '')
         self._groq_client = Groq(api_key=groq_key) if GROQ_AVAILABLE and groq_key else None
