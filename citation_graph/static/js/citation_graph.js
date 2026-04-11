@@ -130,7 +130,7 @@
             fetch('/api/search?q=' + encodeURIComponent(q) + '&source=' + source + '&max=15')
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    var papers = data.papers || [];
+                    var papers = data.data || data.papers || [];
                     if (papers.length === 0) {
                         dropdown.innerHTML = '<div class="cg-paper-result" style="color:#888;text-align:center;">No papers found or rate-limited. Try a broader search or wait.</div>';
                         return;
@@ -190,14 +190,15 @@
                 }
                 return r.json();
             })
-            .then(function (data) {
+            .then(function (raw) {
                 if (loadingEl) loadingEl.style.display = 'none';
-                if (data.error || !data.nodes || data.nodes.length === 0) {
+                var data = raw.data || raw;
+                if (raw.error || data.error || !data.nodes || data.nodes.length === 0) {
                     if (emptyEl) {
                         emptyEl.style.display = 'flex';
                         var h4 = emptyEl.querySelector('h4');
                         var p = emptyEl.querySelector('p');
-                        var msg = data.error || 'No citation data found.';
+                        var msg = raw.error || data.error || 'No citation data found.';
                         if (msg.indexOf('429') !== -1) {
                             if (h4) h4.textContent = 'Rate Limited';
                             if (p) p.innerHTML = 'Semantic Scholar rate limit reached. <strong>Try switching to OpenAlex</strong> using the toggle above, or wait 1–2 minutes.';
@@ -711,10 +712,11 @@
         if (loadingEl) loadingEl.style.display = 'flex';
         fetch('/api/paper/graph?id=' + encodeURIComponent(paperId))
             .then(function (r) { return r.json(); })
-            .then(function (data) {
+            .then(function (raw) {
                 if (loadingEl) loadingEl.style.display = 'none';
-                if (data.error || !data.nodes || data.nodes.length === 0) {
-                    showEmpty(emptyEl, loadingEl, data.error || 'No citation data found.');
+                var data = raw.data || raw;
+                if (raw.error || data.error || !data.nodes || data.nodes.length === 0) {
+                    showEmpty(emptyEl, loadingEl, raw.error || data.error || 'No citation data found.');
                     return;
                 }
                 _allNodes = data.nodes;
