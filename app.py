@@ -3,8 +3,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import Flask
+from whitenoise import WhiteNoise
 
 app = Flask(__name__)
+app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static/')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 
 basedir = os.path.abspath(os.path.dirname(__file__))
