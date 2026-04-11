@@ -1,29 +1,33 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from flask_login import login_required, current_user
 from extensions import db
 from models import Collection, Bookmark
+from errors import api_success, NotFoundError, ConflictError, ValidationError
+from validators import require_json, validate_string
 
 bp = Blueprint('collections', __name__)
 
 @bp.route('/api/collections', methods=['GET'])
 @login_required
 def list_collections():
-    """List all collections for the current user, with bookmark counts."""
-    collections = Collection.query.filter_by(user_id=current_user.id)                                   .order_by(Collection.created_at.desc()).all()
-    return jsonify({'collections': [c.to_dict() for c in collections]})
+    collections = (
+        Collection.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Collection.created_at.desc())
+        .all()
+    )
+    return api_success([c.to_dict() for c in collections])
 
 @bp.route('/api/collections', methods=['POST'])
 @login_required
+@require_json('name')
 def create_collection():
-    """Create a new collection."""
     data = request.get_json()
-    name = (data.get('name') or '').strip() if data else ''
-    if not name:
-        return jsonify({'error': 'Collection name is required.'}), 400
+    name = validate_string(data['name'], 'Collection name', min_len=1, max_len=128)
 
     existing = Collection.query.filter_by(user_id=current_user.id, name=name).first()
     if existing:
-        return jsonify({'error': 'A collection with this name already exists.'}), 409
+        raise ConflictError('A collection with this name already exists.')
 
     collection = Collection(
         user_id=current_user.id,
@@ -32,50 +36,62 @@ def create_collection():
     )
     db.session.add(collection)
     db.session.commit()
-    return jsonify({'message': 'Collection created.', 'collection': collection.to_dict()}), 201
+
+    return api_success(
+        collection.to_dict(),
+        message='Collection created.',
+        status=201,
+    )
 
 @bp.route('/api/collections/<int:collection_id>', methods=['PUT'])
 @login_required
 def update_collection(collection_id):
-    """Rename or re-colour a collection."""
     collection = Collection.query.filter_by(
         id=collection_id, user_id=current_user.id
     ).first()
     if not collection:
-        return jsonify({'error': 'Collection not found.'}), 404
+        raise NotFoundError('Collection not found.')
 
     data = request.get_json() or {}
+    if not data.get('name') and not data.get('color'):
+        raise ValidationError('Provide at least one field to update (name or color).')
+
     if data.get('name'):
-        collection.name = data['name'].strip()
+        collection.name = validate_string(data['name'], 'Collection name', max_len=128)
     if data.get('color'):
         collection.color = data['color']
     db.session.commit()
-    return jsonify({'message': 'Collection updated.', 'collection': collection.to_dict()})
+
+    return api_success(
+        collection.to_dict(),
+        message='Collection updated.',
+    )
+
 
 @bp.route('/api/collections/<int:collection_id>', methods=['DELETE'])
 @login_required
 def delete_collection(collection_id):
-    """Delete a collection. Bookmarks inside become uncollected."""
     collection = Collection.query.filter_by(
         id=collection_id, user_id=current_user.id
     ).first()
     if not collection:
-        return jsonify({'error': 'Collection not found.'}), 404
+        raise NotFoundError('Collection not found.')
 
-    Bookmark.query.filter_by(collection_id=collection_id)                   .update({'collection_id': None})
+    Bookmark.query.filter_by(collection_id=collection_id).update({'collection_id': None})
     db.session.delete(collection)
     db.session.commit()
-    return jsonify({'message': 'Collection deleted.'})
+
+    return api_success(message='Collection deleted.')
+
 
 @bp.route('/api/bookmarks/<int:bookmark_id>/move', methods=['PUT'])
 @login_required
 def move_bookmark(bookmark_id):
-    """Move a bookmark into a collection, or set to null to uncollect."""
     bookmark = Bookmark.query.filter_by(
         id=bookmark_id, user_id=current_user.id
     ).first()
     if not bookmark:
-        return jsonify({'error': 'Bookmark not found.'}), 404
+        raise NotFoundError('Bookmark not found.')
 
     data = request.get_json() or {}
     target_id = data.get('collection_id')
@@ -85,8 +101,12 @@ def move_bookmark(bookmark_id):
             id=target_id, user_id=current_user.id
         ).first()
         if not collection:
-            return jsonify({'error': 'Target collection not found.'}), 404
+            raise NotFoundError('Target collection not found.')
 
     bookmark.collection_id = target_id
     db.session.commit()
-    return jsonify({'message': 'Bookmark moved.', 'bookmark': bookmark.to_dict()})
+
+    return api_success(
+        bookmark.to_dict(),
+        message='Bookmark moved.',
+    )
