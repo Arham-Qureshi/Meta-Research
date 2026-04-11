@@ -1,14 +1,8 @@
-"""
-routes.py — Flask Blueprint routes for the Citation Graph feature.
-
-Endpoints:
-    GET  /citation-graph           → standalone page
-    GET  /api/paper/graph          → JSON citation network
-"""
-
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request
 from datetime import datetime, timedelta
 import json
+
+from errors import api_success, api_error, ValidationError
 
 bp = Blueprint(
     "citation_graph",
@@ -28,7 +22,7 @@ def api_graph():
 
     paper_id = request.args.get("id", "").strip()
     if not paper_id:
-        return jsonify({"error": 'Paper ID parameter "id" is required.'}), 400
+        raise ValidationError('Paper ID parameter "id" is required.')
 
     source = request.args.get("source", "semantic_scholar").strip()
     if source not in ("semantic_scholar", "openalex"):
@@ -45,7 +39,7 @@ def api_graph():
     ).first()
 
     if cache_entry and (datetime.utcnow() - cache_entry.created_at) < timedelta(days=7):
-        return jsonify(json.loads(cache_entry.graph_json))
+        return api_success(json.loads(cache_entry.graph_json))
 
     result = build_graph(
         paper_id,
@@ -55,7 +49,7 @@ def api_graph():
     )
 
     if result.get("error"):
-        return jsonify({"error": result["error"]}), 502
+        return api_error(result["error"], 502)
 
     actual_source = result.get("source", source)
     try:
@@ -73,4 +67,4 @@ def api_graph():
     except Exception:
         db.session.rollback()
 
-    return jsonify(result)
+    return api_success(result)
