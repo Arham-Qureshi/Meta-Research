@@ -16,8 +16,9 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var paper = null;
-                if (data.papers && data.papers.length > 0) {
-                    paper = data.papers.find(function (p) { return p.id === paperId; }) || data.papers[0];
+                var papers = data.data || data.papers || [];
+                if (papers && papers.length > 0) {
+                    paper = papers.find(function (p) { return p.id === paperId; }) || papers[0];
                 }
                 if (!paper) {
                     if (loadingEl) {

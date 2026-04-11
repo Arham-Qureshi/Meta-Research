@@ -105,10 +105,10 @@ attachRealTimeListeners();
                     try {
                         const meRes = await fetch('/api/me');
                         const meData = await meRes.json();
-                        if (meData.authenticated) {
+                        if (meData.data && meData.data.authenticated) {
                             const bRes = await fetch('/api/bookmarks');
                             const bData = await bRes.json();
-                            bData.bookmarks.forEach(b => currentBookmarkedIds.add(b.paper_id));
+                            (bData.data || []).forEach(b => currentBookmarkedIds.add(b.paper_id));
                         }
                     } catch (_) { }
                     renderPapers();
@@ -145,7 +145,8 @@ attachRealTimeListeners();
         debounceTimeout = setTimeout(async () => {
             try {
                 const res = await fetch(`/api/suggest?q=${encodeURIComponent(query)}`);
-                const suggestions = await res.json();
+                const suggestData = await res.json();
+                const suggestions = suggestData.data || suggestData || [];
 
                 if (suggestions && suggestions.length > 0 && searchSuggestions) {
                     currentSuggestions = suggestions;
@@ -254,25 +255,26 @@ async function performSearch() {
     try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&source=all&max=20`);
         const data = await res.json();
+        const papers = data.data || data.papers || [];
         loadingContainer.classList.remove('active');
-        if (!data.papers || data.papers.length === 0) {
+        if (!papers || papers.length === 0) {
             noResults.classList.add('active');
             document.getElementById('resultsCount').textContent = '0 papers found';
             return;
         }
-        currentFetchedPapers = data.papers;
+        currentFetchedPapers = papers;
         try {
             sessionStorage.setItem('mr_search_query', query);
-            sessionStorage.setItem('mr_search_papers', JSON.stringify(data.papers));
+            sessionStorage.setItem('mr_search_papers', JSON.stringify(papers));
         } catch (_) { }
         saveRecentSearch(query);
         try {
             const meRes = await fetch('/api/me');
             const meData = await meRes.json();
-            if (meData.authenticated) {
+            if (meData.data && meData.data.authenticated) {
                 const bRes = await fetch('/api/bookmarks');
                 const bData = await bRes.json();
-                bData.bookmarks.forEach(b => currentBookmarkedIds.add(b.paper_id));
+                (bData.data || []).forEach(b => currentBookmarkedIds.add(b.paper_id));
             }
         } catch (_) { }
         renderPapers();
@@ -421,7 +423,7 @@ async function toggleBookmark(btn, paper) {
     try {
         const meRes = await fetch('/api/me');
         const meData = await meRes.json();
-        if (!meData.authenticated) {
+        if (!(meData.data && meData.data.authenticated)) {
             alert('Please login to bookmark papers.');
             window.location.href = '/login';
             return;
@@ -434,7 +436,8 @@ async function toggleBookmark(btn, paper) {
     if (isActive) {
         try {
             const checkRes = await fetch(`/api/bookmarks/check/${encodeURIComponent(paper.id)}`);
-            const checkData = await checkRes.json();
+            const checkRaw = await checkRes.json();
+            const checkData = checkRaw.data || checkRaw;
             if (checkData.bookmarked && checkData.bookmark_id) {
                 await fetch(`/api/bookmarks/${checkData.bookmark_id}`, { method: 'DELETE' });
                 btn.classList.remove('active');
@@ -532,8 +535,9 @@ async function copyCitation(btn, format) {
             body: JSON.stringify({ paper, format }),
         });
         const data = await res.json();
-        if (data.citation) {
-            await navigator.clipboard.writeText(data.citation);
+        const citationData = data.data || data;
+        if (citationData.citation) {
+            await navigator.clipboard.writeText(citationData.citation);
             showToast(`${format.toUpperCase()} copied to clipboard`);
         } else {
             showToast('Failed to generate citation', true);

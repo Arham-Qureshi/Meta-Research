@@ -19,7 +19,8 @@
     async function loadStats() {
         try {
             const res = await fetch('/api/dashboard/stats');
-            const d = await res.json();
+            const raw = await res.json();
+            const d = raw.data || raw;
             animateStat('statBookmarks', d.total_bookmarks);
             animateStat('statCollections', d.total_collections);
             animateStat('statSearches', d.total_searches);
@@ -42,7 +43,8 @@
     async function loadChart() {
         try {
             const res = await fetch('/api/dashboard/chart');
-            const d = await res.json();
+            const raw = await res.json();
+            const d = raw.data || raw;
             renderChart(d.days || []);
         } catch (err) {
             console.error('Failed to load chart', err);
@@ -101,7 +103,8 @@
     async function loadActivity() {
         try {
             const res = await fetch('/api/dashboard/activity');
-            const d = await res.json();
+            const raw = await res.json();
+            const d = raw.data || raw;
             renderSearches(d.searches || []);
             renderViews(d.views || []);
         } catch (err) {

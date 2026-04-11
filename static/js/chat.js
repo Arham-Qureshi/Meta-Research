@@ -36,8 +36,8 @@ function initChatLogic() {
         if (welcome) welcome.remove();
         const msg = document.createElement('div');
         msg.className = `chat-msg ${role}`;
-        const avatarText = role === 'user' 
-            ? '<i data-lucide="user" style="width: 20px; height: 20px;"></i>' 
+        const avatarText = role === 'user'
+            ? '<i data-lucide="user" style="width: 20px; height: 20px;"></i>'
             : '<i data-lucide="bot" style="width: 20px; height: 20px;"></i>';
         const bubble = isHtml ? content : escapeHtml(content);
         msg.innerHTML = `
@@ -98,7 +98,8 @@ function initChatLogic() {
                 return;
             }
             const data = await res.json();
-            addMessage('ai', mdToHtml(data.reply), true);
+            const replyText = (data.data && data.data.reply) || data.reply;
+            addMessage('ai', mdToHtml(replyText), true);
         } catch (err) {
             hideTyping();
             showError('Network error. Please check your connection.');
@@ -127,7 +128,8 @@ function initChatLogic() {
                 return;
             }
             const data = await res.json();
-            addMessage('ai', mdToHtml(data.summary), true);
+            const summaryText = (data.data && data.data.summary) || data.summary;
+            addMessage('ai', mdToHtml(summaryText), true);
         } catch (err) {
             hideTyping();
             showError('Network error. Please check your connection.');

@@ -39,7 +39,7 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 showSkeleton(trendingLoading, false);
-                var papers = data.papers || [];
+                var papers = data.data || data.papers || [];
                 if (papers.length === 0) {
                     trendingGrid.innerHTML = emptyState('microscope', 'No trending papers right now', 'Check back later – we refresh every few hours.');
                 } else {
@@ -64,7 +64,7 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 showSkeleton(newsLoading, false);
-                var articles = data.articles || [];
+                var articles = data.data || data.articles || [];
                 if (articles.length === 0) {
                     newsGrid.innerHTML = emptyState('newspaper', 'No news articles available', 'Add a GNEWS_API_KEY or NEWSDATA_API_KEY to your .env to enable the news feed.');
                 } else {
