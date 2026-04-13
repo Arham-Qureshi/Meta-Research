@@ -617,23 +617,125 @@
 }
 
 @media (max-width: 768px) {
+    .dashboard-page {
+        padding: 1.5rem 1rem 3rem;
+    }
+
     .dash-hero {
         flex-direction: column;
         text-align: center;
-        padding: 2rem 1.5rem;
+        padding: 1.75rem 1.25rem;
+        gap: 1.25rem;
     }
 
     .dash-hero-visual {
-        margin-top: 1.5rem;
+        width: 120px;
+        height: 120px;
+    }
+
+    .dash-hero-title {
+        font-size: clamp(1.2rem, 4vw, 1.6rem);
+    }
+
+    .dash-hero-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .dash-hero-cta .btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .activity-grid {
         grid-template-columns: 1fr;
     }
+
+    .stat-card-value {
+        font-size: 1.6rem;
+    }
+
+    .stat-card {
+        padding: 1.1rem;
+    }
+
+    .dash-panel-header {
+        padding: 0.85rem 1rem;
+    }
+
+    .chart-bars {
+        height: 120px;
+    }
 }
 
 @media (max-width: 480px) {
+    .dashboard-page {
+        padding: 1rem 0.75rem 2.5rem;
+    }
+
     .stats-grid {
         grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .stat-card-value {
+        font-size: 1.4rem;
+    }
+
+    .stat-card-label {
+        font-size: 0.65rem;
+    }
+
+    .dash-hero {
+        padding: 1.5rem 1rem;
+    }
+
+    .dash-hero-visual {
+        width: 100px;
+        height: 100px;
+    }
+
+    .orbit-dot {
+        width: 28px;
+        height: 28px;
+        font-size: 0.85rem;
+    }
+
+    .orbit-dot-1 {
+        top: -14px;
+        left: calc(50% - 14px);
+    }
+
+    .orbit-dot-2 {
+        bottom: -14px;
+        left: calc(50% - 14px);
+    }
+
+    .orbit-dot-3 {
+        left: -14px;
+        top: calc(50% - 14px);
+    }
+
+    .orbit-dot-4 {
+        right: -14px;
+        top: calc(50% - 14px);
+    }
+
+    .activity-item {
+        padding: 0.6rem 0.85rem;
+    }
+
+    .activity-title {
+        font-size: 0.8rem;
+    }
+
+    .topic-card {
+        padding: 0.6rem 0.75rem;
+    }
+
+    .dash-live-indicator {
+        bottom: 1rem;
+        right: 1rem;
+        font-size: 0.62rem;
+        padding: 0.25rem 0.6rem;
     }
 }

@@ -436,6 +436,14 @@
         padding: 1.5rem 1rem 3rem;
     }
 
+    .discover-title {
+        font-size: clamp(1.4rem, 5vw, 2rem);
+    }
+
+    .discover-subtitle {
+        font-size: 0.88rem;
+    }
+
     .trending-grid,
     .news-grid,
     .skeleton-grid {
@@ -446,5 +454,81 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 0.6rem;
+    }
+
+    .trending-card {
+        padding: 1.1rem;
+    }
+
+    .trending-card-title {
+        font-size: 0.88rem;
+    }
+
+    .trending-card-summary {
+        font-size: 0.76rem;
+    }
+
+    .news-card-image,
+    .news-card-image-placeholder {
+        height: 130px;
+    }
+
+    .news-card-title {
+        font-size: 0.85rem;
+    }
+
+    .news-card-desc {
+        font-size: 0.75rem;
+    }
+
+    .discover-section {
+        margin-bottom: 2.5rem;
+    }
+
+    .discover-header {
+        margin-bottom: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .discover-page {
+        padding: 1rem 0.75rem 2.5rem;
+    }
+
+    .discover-title {
+        font-size: 1.3rem;
+    }
+
+    .discover-subtitle {
+        font-size: 0.82rem;
+    }
+
+    .section-label {
+        font-size: 1rem;
+    }
+
+    .trending-card {
+        padding: 1rem;
+    }
+
+    .trending-card-meta {
+        gap: 0.5rem;
+    }
+
+    .trending-meta-chip {
+        font-size: 0.65rem;
+    }
+
+    .news-card-body {
+        padding: 0.85rem;
+    }
+
+    .news-card-title {
+        font-size: 0.82rem;
+    }
+
+    .discover-badge {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.7rem;
     }
 }
