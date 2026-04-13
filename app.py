@@ -7,7 +7,9 @@ from whitenoise import WhiteNoise
 
 app = Flask(__name__)
 app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static/')
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    raise ValueError("No SECRET_KEY set for Flask application. Please configure it in your environment variables.")
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
