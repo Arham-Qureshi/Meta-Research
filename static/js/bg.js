@@ -1,6 +1,24 @@
 (function initGridBackground() {
     const canvas = document.getElementById('bgCanvas');
     if (!canvas) return;
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowMemory = navigator.deviceMemory && navigator.deviceMemory <= 2;
+    if (reducedMotion || lowMemory) {
+        const ctx = canvas.getContext('2d', { alpha: false });
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        ctx.fillStyle = '#121212';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width; x += 40) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+        for (let y = 0; y < canvas.height; y += 40) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+        ctx.stroke();
+        return;
+    }
+
     const ctx = canvas.getContext('2d', { alpha: false });
 
     let W, H;
